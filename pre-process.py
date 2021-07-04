@@ -62,26 +62,25 @@ for i, asana, subject_id in enumerate(zip(time_stamps["aasana"], time_stamps["su
 	if none_frame_list is not None:
 		for frame_no in frame_no_list:
 			final_dict["class"].append("None")
-			for i in range(136):
-				for j in range(3):
-					final_dict["keypt" + "_" + str(i) + "_" + str(j)].append(data[frame_no]["keypoints"][i*3 + j])
-
+			for j in range(136):
+				for k in range(3):
+					final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
 	frame_no_list = get_frame_no_list(fps, start_time, end_time)
 	if frame_no_list is not None:
 		for frame_no in frame_no_list:
 			final_dict["class"].append(get_asana_id(asana, "left"))
-			for i in range(136):
-				for j in range(3):
-					final_dict["keypt" + "_" + str(i) + "_" + str(j)].append(data[frame_no]["keypoints"][i*3 + j])
+			for j in range(136):
+				for k in range(3):
+					final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
 	frame_no_list = get_frame_no_list(fps, start_time_right, end_time_right)
 	if frame_no_list is not None:
 		for frame_no in frame_no_list:
 			final_dict["class"].append(get_asana_id(asana, "right"))
-			for i in range(136):
-				for j in range(3):
-					final_dict["keypt" + "_" + str(i) + "_" + str(j)].append(data[frame_no]["keypoints"][i*3 + j])
+			for j in range(136):
+				for k in range(3):
+					final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
 
 df = pd.DataFrame(final_dict)
