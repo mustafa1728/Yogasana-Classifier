@@ -1,12 +1,11 @@
 import os
 import json
 import pandas as pd
-import cv2
-import numpy as np
 import logging
 
 original_videos_root = "/mnt/project2/home/rahul/Yoga-Kinect/VideosAll/"
 time_stamps = pd.read_csv("timestamps.csv")
+fps_df = pd.read_csv("fps.csv")
 root = "/home1/ee318062/Yoga_Camera1_AlphaPose/"
 
 
@@ -26,18 +25,20 @@ for i in range(136):
 		final_dict["keypt" + "_" + str(i) + "_" + str(j)] = []
 
 def get_fps(asana, subject_id, prefix = "N"):
-	vid_name =  "Sub"+subject_id[-3:] + prefix +"_" + asana + "_Camera1.avi"
-	vid_path = os.path.join(original_videos_root, vid_name)
-	cap = cv2.VideoCapture(vid_path)
-	if cap is None or not cap.isOpened():
-		if prefix == "N":
-			logging.warning("Original video not found N, looking for O!")
-			return get_fps(asana, subject_id, "O")
-		else:
-			logging.warning("Original video not found both N and O! Taking default 20")
-			return 20.0
-	fps = cap.get(cv2.CAP_PROP_FPS)
+	fps = fps_df[(fps_df["asana"] == asana) & (fps_df["subject"] == subject_id)].iloc[0]["fps"]
 	return fps
+	# vid_name =  "Sub"+subject_id[-3:] + prefix +"_" + asana + "_Camera1.avi"
+	# vid_path = os.path.join(original_videos_root, vid_name)
+	# cap = cv2.VideoCapture(vid_path)
+	# if cap is None or not cap.isOpened():
+	# 	if prefix == "N":
+	# 		logging.warning("Original video not found N, looking for O!")
+	# 		return get_fps(asana, subject_id, "O")
+	# 	else:
+	# 		logging.warning("Original video not found both N and O! Taking default 20")
+	# 		return 20.0
+	# fps = cap.get(cv2.CAP_PROP_FPS)
+	# return fps
 
 
 def get_frame_no_list(fps, start_time, end_time, total_frames, fpv = no_frames_per_video):
