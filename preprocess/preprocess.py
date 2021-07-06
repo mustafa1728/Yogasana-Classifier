@@ -4,10 +4,15 @@ import pandas as pd
 import logging
 
 original_videos_root = "/mnt/project2/home/rahul/Yoga-Kinect/VideosAll/"
+root = "/home1/ee318062/"
 time_stamps = pd.read_csv("timestamps.csv")
 fps_df = pd.read_csv("fps.csv")
-root = "/home1/ee318062/Yoga_Camera1_AlphaPose/"
+camera_data = pd.read_csv("camera.csv")
 
+
+camera_mapping = {"Still": 1}
+for index, row in camera_data.iterrows():
+	camera_mapping[row['asana']] = row["camera"]
 
 no_frames_per_video = 200
 padding = 1
@@ -23,6 +28,25 @@ final_dict = {"class": []}
 for i in range(136):
 	for j in range(3):
 		final_dict["keypt" + "_" + str(i) + "_" + str(j)] = []
+
+def change_convention(asana, subject_id):
+	subject_number = int(subject_id[-3:])
+	
+	max_old = 25
+	if subject_number<=max_old:
+		return None, None
+	subject_number -= max_old
+	subject_id = subject_id[:-3] + str(subject_number).zfill(3)
+
+	return asana, subject_id
+
+def get_folder_name(asana):
+	try:
+		camera = camera_mapping[asana]
+	except KeyError:
+		camera = 1
+		logging.error("Camera not known for asana: " + asana + "! Using camera 1")
+	return "Yoga_Camera" + str(int(camera)) + "_AlphaPose"
 
 def get_fps(asana, subject_id, prefix = "N"):
 	fps = fps_df[(fps_df["asana"] == asana) & (fps_df["subject"] == subject_id)].iloc[0]["fps"]
@@ -72,50 +96,62 @@ def get_asana_id(asana, direction):
 	'''
 	return asana + "_" + direction
 
-for i, (asana, subject_id) in enumerate(zip(time_stamps["aasana"], time_stamps["subject"])):
-	if pd.isnull(subject_id) or pd.isnull(asana):
-		continue
-	dir_name =  subject_id + "_" + asana
-	try:
-		with open(os.path.join(root, dir_name, "alphapose-results.json")) as f:
-			data = json.load(f)
-	except FileNotFoundError:
-		logging.error("Alphapose results not found in "+dir_name+"! Going to next video.")
-		continue
-	start_time = time_stamps.iloc[i]["position start (left)"]
-	end_time = time_stamps.iloc[i]["position end (left)"]
-	start_time_right = time_stamps.iloc[i]["position start (right)"]
-	end_time_right = time_stamps.iloc[i]["position end (right)"]
+def main():
+	for i, (asana, subject_id) in enumerate(zip(time_stamps["aasana"], time_stamps["subject"])):
+		if pd.isnull(subject_id) or pd.isnull(asana):
+			continue
+		asana, subject_id = change_convention(asana, subject_id)
+		if asana is None or subject_id is None:
+			continue
+		asana_root = os.path.join(root, get_folder_name(asana))
+		dir_name =  subject_id + "_" + asana
+		try:
+			with open(os.path.join(asana_root, dir_name, "alphapose-results.json")) as f:
+				data = json.load(f)
+		except FileNotFoundError:
+			logging.error("Alphapose results not found in "+dir_name+" for camera " + str(camera_mapping[asana]) + "! Going to next video.")
+			continue
+		start_time = time_stamps.iloc[i]["position start (left)"]
+		end_time = time_stamps.iloc[i]["position end (left)"]
+		start_time_right = time_stamps.iloc[i]["position start (right)"]
+		end_time_right = time_stamps.iloc[i]["position end (right)"]
 
-	total_frames = len(data)
-	
-	fps = get_fps(asana, subject_id)
-	logging.info(fps, i, asana, subject_id, start_time, end_time)
+		total_frames = len(data)
+		
+		try:
+			fps = get_fps(asana, subject_id)
+		except IndexError:
+			logging.error("FPS for " + asana + " - " + subject_id + " not found! Going to next video.")
+			continue
+		logging.info(fps, i, asana, subject_id, start_time, end_time)
 
-	none_frame_list = get_frame_no_list(fps, 0, start_time, total_frames, no_frames_per_video//20)
-	if none_frame_list is not None:
-		for frame_no in none_frame_list:
-			final_dict["class"].append("None")
-			for j in range(136):
-				for k in range(3):
-					final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
+		none_frame_list = get_frame_no_list(fps, 0, start_time, total_frames, no_frames_per_video//20)
+		if none_frame_list is not None:
+			for frame_no in none_frame_list:
+				final_dict["class"].append("None")
+				for j in range(136):
+					for k in range(3):
+						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
-	frame_no_list = get_frame_no_list(fps, start_time, end_time, total_frames)
-	if frame_no_list is not None:
-		for frame_no in frame_no_list:
-			final_dict["class"].append(get_asana_id(asana, "left"))
-			for j in range(136):
-				for k in range(3):
-					final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
+		frame_no_list = get_frame_no_list(fps, start_time, end_time, total_frames)
+		if frame_no_list is not None:
+			for frame_no in frame_no_list:
+				final_dict["class"].append(get_asana_id(asana, "left"))
+				for j in range(136):
+					for k in range(3):
+						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
-	frame_no_list = get_frame_no_list(fps, start_time_right, end_time_right, total_frames)
-	if frame_no_list is not None:
-		for frame_no in frame_no_list:
-			final_dict["class"].append(get_asana_id(asana, "right"))
-			for j in range(136):
-				for k in range(3):
-					final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
+		frame_no_list = get_frame_no_list(fps, start_time_right, end_time_right, total_frames)
+		if frame_no_list is not None:
+			for frame_no in frame_no_list:
+				final_dict["class"].append(get_asana_id(asana, "right"))
+				for j in range(136):
+					for k in range(3):
+						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
 
-df = pd.DataFrame(final_dict)
-df.to_csv("dataset.csv", index = False)
+	df = pd.DataFrame(final_dict)
+	df.to_csv("dataset.csv", index = False)
+
+
+main()
