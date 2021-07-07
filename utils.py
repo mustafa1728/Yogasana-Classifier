@@ -24,5 +24,8 @@ def create_train_test(X, Y, test_size):
 
 def get_parent_args():
     parent_args = args.ArgumentParser(add_help=False)
+    parent_args.add_argument('--save_model_path', '-s', dest='save_model_path', nargs=1, help='Specify path to save trained model')
     parent_args.add_argument('--model_path', '-m', dest='model_path', nargs=1, help='Specify the Trained Model Path')
-    parent_args.add_argument()
+    parent_args.add_argument('--data', '-d', dest='data', nargs=1, help='Specify path to the dataset .csv file')
+    parent_args.add_argument('--results', '-r', nargs=1, dest='res', help='File path to store the results')
+    return parent_args
