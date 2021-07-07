@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import logging
+import numpy as np
 
 original_videos_root = "/mnt/project2/home/rahul/Yoga-Kinect/VideosAll/"
 root = "/home1/ee318062/"
@@ -18,7 +19,7 @@ asana_id_mapping = {}
 logging.basicConfig(filename="logs_kinect.txt",
 					filemode='w',
 					format='%(levelname)-6s | %(message)s',
-					level=logging.WARNING)
+					level=logging.INFO)
 
 final_dict = {"class": []}
 for i in range(25):
@@ -35,21 +36,10 @@ def get_timestamp_convention(subject_id, suffix):
 
 def get_fps(i):
 	# fps = combined_csv[(combined_csv["asana"] == asana) & (combined_csv["subject"] == subject_id)].iloc[0]["fps"]
-	no_frames = combined_csv.iloc[i]["number of frames in joints.csv"]
-	total_time = combined_csv.iloc[i]["total duration in seconds (joints.csv)"]
+	no_frames = combined_csv.iloc[i][" number of frames in joints.csv"]
+	total_time = combined_csv.iloc[i][" total duration in seconds (joints.csv)"]
+	total_time = float(total_time)
 	return no_frames/total_time, no_frames
-	# vid_name =  "Sub"+subject_id[-3:] + suffix +"_" + asana + "_Camera1.avi"
-	# vid_path = os.path.join(original_videos_root, vid_name)
-	# cap = cv2.VideoCapture(vid_path)
-	# if cap is None or not cap.isOpened():
-	# 	if suffix == "N":
-	# 		logging.warning("Original video not found N, looking for O!")
-	# 		return get_fps(asana, subject_id, "O")
-	# 	else:
-	# 		logging.warning("Original video not found both N and O! Taking default 20")
-	# 		return 20.0
-	# fps = cap.get(cv2.CAP_PROP_FPS)
-	# return fps
 
 
 def get_frame_no_list(fps, start_time, end_time, total_frames, fpv = no_frames_per_video):
@@ -76,8 +66,12 @@ def get_frame_no_list(fps, start_time, end_time, total_frames, fpv = no_frames_p
 	
 
 def get_keypoint(joints, frame_no, i, j):
-    current_frame_df = joints[(joints[4] == frame_no)]
-    return current_frame_df.iloc[i][5+j]
+	current_frame_df = joints[(joints[4] == frame_no)]
+	try:
+		keypoint = current_frame_df.iloc[i][5+j]
+	except IndexError: 
+		keypoint = np.nan
+	return keypoint
 
 
 def get_asana_id(asana, direction):
@@ -89,19 +83,24 @@ def get_asana_id(asana, direction):
 
 def main():
 	for i, (dir_path, subject_id, asana, suffix) in enumerate(zip(combined_csv[" directory pathname"], combined_csv["Subject"], combined_csv[" Asana"], combined_csv[" O/N"])):
-		print(i)
 		if pd.isnull(dir_path) or pd.isnull(subject_id) or pd.isnull(asana) or pd.isnull(suffix):
 			logging.error("Missing data at index " + str(i) + "! Going to next video.")
 			continue
-
-		print(os.path.isfile(os.path.join(dir_path, "joints.csv")))
+		dir_path = dir_path[1:]
+		asana = asana[1:]
+		suffix = suffix[1:]
+		# print(os.readlink(dir_path), os.path.isfile(os.path.join(os.readlink(dir_path), "joints.csv")))
 		try:
 			joints = pd.read_csv(os.path.join(dir_path, "joints.csv"), header=None)
 		except FileNotFoundError:
 			logging.error("Joints data not found in " + dir_path + "! Going to next video.")
 			continue
-
-		current_dict = time_stamps[(time_stamps["asana"] == asana) & (time_stamps["subject"] == get_timestamp_convention(subject_id, suffix))].iloc[0]
+		
+		try:
+			current_dict = time_stamps[(time_stamps["aasana"] == asana) & (time_stamps["subject"] == get_timestamp_convention(subject_id, suffix))].iloc[0]
+		except IndexError:
+			logging.error("No timestamps found for "+asana+"-"+get_timestamp_convention(subject_id, suffix))
+			continue
 		start_time = current_dict["position start (left)"]
 		end_time = current_dict["position end (left)"]
 		start_time_right = current_dict["position start (right)"]
@@ -112,15 +111,16 @@ def main():
 		except IndexError:
 			logging.error("FPS for " + asana + " - " + subject_id + " not found! Going to next video.")
 			continue
-		logging.info(fps, i, asana, subject_id, start_time, end_time)
-		print(fps, i, asana, subject_id, start_time, end_time)
+		string_status = str(i) + "| fps: "+str(fps)+" asana: "+asana+" subject: "+subject_id+" suffix: "+suffix
+		logging.info(string_status)
+		print(string_status)
 
 		frame_no_list = get_frame_no_list(fps, start_time, end_time, total_frames)
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "left"))
 				for j in range(25):
-					for k in range(3):
+					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
 
 		frame_no_list = get_frame_no_list(fps, start_time_right, end_time_right, total_frames)
@@ -128,7 +128,7 @@ def main():
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "right"))
 				for j in range(25):
-					for k in range(3):
+					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
 
 		none_frame_list = get_frame_no_list(fps, 0, start_time, total_frames, no_frames_per_video//20)
@@ -136,7 +136,7 @@ def main():
 			for frame_no in none_frame_list:
 				final_dict["class"].append("None")
 				for j in range(25):
-					for k in range(3):
+					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
 
 
