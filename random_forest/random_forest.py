@@ -41,13 +41,14 @@ def train(no_trees = 200, dataset_path = "dataset.csv", save_model_path = "model
 
     accuracy = classifier.score(X_Test, Y_Test)
     print("The random forest with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
-
+    fig, ax = plt.subplots(figsize=(20, 20))
     plot_confusion_matrix(
         classifier, 
-        X_Test, Y_Test, 
+        X_Test, Y_Test, ax=ax,
         display_labels=list(class_to_id_mapping.keys()), 
         cmap=plt.cm.Blues,
-        normalize="pred"
+        normalize="pred",
+        xticks_rotation = "vertical"
     )
     plt.savefig("confusion_matrix.png", pad_inches = 2, dpi = 300)
     # predictions = classifier.predict(X_Test)
@@ -74,4 +75,3 @@ def predict_class(input_features, model_weights_path = "model.z", saved_mapping 
     return id_to_class_mapping[class_pred]
 
 train(no_trees = 200, dataset_path = "../pre-process/dataset.csv")
-# train(no_trees = 200)
