@@ -1,15 +1,12 @@
-import numpy as np
-import json
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, plot_confusion_matrix
+from sklearn.metrics import plot_confusion_matrix
 import joblib
-from ..utils import create_train_test, pre_process_labels
+import argparse as args
+from ..utils import create_train_test, get_parent_args, pre_process_labels
 
-def train(num_trees = 200, dataset_path = "dataset.csv", save_model_path = "model.z"):
+def train(num_trees, dataset_path, save_model_path):
 
     dataset = pd.read_csv(dataset_path)
     dataset, class_to_id_mapping, id_to_class_mapping = pre_process_labels(dataset)
@@ -49,4 +46,7 @@ def train(num_trees = 200, dataset_path = "dataset.csv", save_model_path = "mode
     #    json.dump(id_to_class_mapping, f)
 
 if __name__ == '__main__':
-    train(num_trees = 200, dataset_path = "../pre-process/dataset.csv")
+    ap = args.ArgumentParser(prog='Random Forest Classifier', parents=[get_parent_args()])
+    ap.add_argument('--n_trees', '--n', dest='num_trees', nargs=1, type=int, help='Number of Trees in the Classifier')
+    ap.parse_args()
+    train(num_trees = ap.num_trees, dataset_path = ap.data, save_model_path=ap.save_model_path)
