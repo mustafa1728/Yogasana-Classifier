@@ -121,6 +121,15 @@ def main():
 					for k in range(3):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
+		none_frame_list = get_frame_no_list(fps, end_time_right, total_frames, total_frames, no_frames_per_video//20)
+		if none_frame_list is not None:
+			for frame_no in none_frame_list:
+				final_dict["class"].append("None")
+				for j in range(136):
+					for k in range(3):
+						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
+
+
 		frame_no_list = get_frame_no_list(fps, start_time, end_time, total_frames)
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:

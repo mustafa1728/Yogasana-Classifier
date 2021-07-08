@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import joblib
 from sklearn.metrics import plot_confusion_matrix
 import pandas as pd
+import pickle
 
 def load_model(model_weights_path):
     classifier = joblib.load(model_weights_path)
@@ -50,9 +51,17 @@ def create_train_test(X, Y, test_size):
     X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size = test_size, random_state = 0)
     
     # Feature Scaling
+    print("mean: ", np.mean(X_Train, axis = 0))
+    print("std: ", np.std(X_Train, axis = 0), np.var(X_Train, axis = 0))
     sc_X = StandardScaler()
     X_Train = sc_X.fit_transform(X_Train)
     X_Test = sc_X.transform(X_Test)
+
+    with open("scalar.pkl", "wb") as f:
+        pickle.dump(sc_X, f)
+    print("scalar's mean: ", sc_X.mean_)
+    print("scalar's std: ", sc_X.var_, np.sqrt(sc_X.var_))
+
 
     return X_Train, X_Test, Y_Train, Y_Test
 
