@@ -6,10 +6,33 @@ import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 import joblib
+from sklearn.metrics import plot_confusion_matrix
+import pandas as pd
 
 def load_model(model_weights_path):
     classifier = joblib.load(model_weights_path)
     return classifier
+
+def get_dataset(dataset_path):
+    dataset = pd.read_csv(dataset_path)
+    dataset = pre_process_labels(dataset)
+    indices_to_keep = ~dataset.isin([np.nan, np.inf, -np.inf]).any(1)
+    dataset = dataset[indices_to_keep]
+    X = dataset.iloc[:, 1:].values
+    Y = dataset.iloc[:, 0].values
+    return X, Y
+
+def save_confusion(classifier, X_Test, Y_Test, display_labels=None, save_path = "confusion_matrix.png"):
+    fig, ax = plt.subplots(figsize=(20, 16))
+    plot_confusion_matrix(
+        classifier, 
+        X_Test, Y_Test, ax=ax,
+        display_labels=display_labels, 
+        cmap=plt.cm.Blues,
+        normalize="pred",
+        xticks_rotation = "vertical"
+    )
+    plt.savefig(save_path, dpi = 300)
 
 def pre_process_labels(dataset):
     class_to_id_mapping = {} 
