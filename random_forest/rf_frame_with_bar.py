@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import joblib
 
 model_path='model.z'
+scaler_path=''
 video_path='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj001_Ardhachakrasana/AlphaPose-color.avi'
 key_pt_path='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj001_Ardhachakrasana/alphapose-results.json'
 frames_folder='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj001_Ardhachakrasana/vis'
@@ -23,6 +24,7 @@ name = ls[1] + '_' + cam
 save_folder = './'+name+'_Bar_Plots'
 save_folder_combined = './'+name+'_Combined'
 classifier = joblib.load(model_path)
+scaler = joblib.load(scaler_path)
 
 def resize_pad(img, width, height, interpolation=cv.INTER_AREA):
     curr_img = cv.resize(img, ((img.shape[1]*height)//img.shape[0], height), interpolation=interpolation)    
@@ -32,7 +34,7 @@ def resize_pad(img, width, height, interpolation=cv.INTER_AREA):
     final_img[center1:center1 + curr_img.shape[0], center2:center2 + curr_img.shape[1], :] = curr_img
     return final_img
 
-def create_video_with_proba(video_path, frames_folder, classifier, path_to_kp, id_to_class_mapping, save_folder, save_folder_combined):
+def create_video_with_proba(video_path, frames_folder, classifier, scaler, path_to_kp, id_to_class_mapping, save_folder, save_folder_combined):
     if not os.path.isdir(save_folder):
         os.mkdir(save_folder)
     if not os.path.isdir(save_folder_combined):
@@ -47,7 +49,7 @@ def create_video_with_proba(video_path, frames_folder, classifier, path_to_kp, i
     for k in range(len(key_pts)):
         plt.rcdefaults()
         fig, ax = plt.subplots()
-        ax.barh(y_pos, classifier.predict_proba(np.array(key_pts[k]['keypoints']).reshape(1, -1)).reshape(-1), align='center')
+        ax.barh(y_pos, classifier.predict_proba(sclaer.transform(np.array(key_pts[k]['keypoints']).reshape(1, -1))).reshape(-1), align='center')
         ax.set_yticks(y_pos)
         ax.set_yticklabels(class_names)
         ax.invert_yaxis()
