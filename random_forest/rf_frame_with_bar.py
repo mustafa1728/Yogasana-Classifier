@@ -73,4 +73,4 @@ def create_video_with_proba(video_path, frames_folder, classifier, scaler, path_
         if i >= 10:
            break
 
-create_video_with_proba(video_path, frames_folder, classifier, key_pt_path, id_to_class_map, save_folder, save_folder_combined)
+create_video_with_proba(video_path, frames_folder, classifier, scaler, key_pt_path, id_to_class_map, save_folder, save_folder_combined)
