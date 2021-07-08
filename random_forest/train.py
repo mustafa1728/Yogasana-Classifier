@@ -9,6 +9,7 @@ from ..utils import create_train_test, get_parent_args, pre_process_labels
 def train(num_trees, dataset_path, save_model_path):
 
     dataset = pd.read_csv(dataset_path)
+    dataset.dropna(inplace=True)
     dataset, class_to_id_mapping, id_to_class_mapping = pre_process_labels(dataset)
     X = dataset.iloc[:, 1:].values
     Y = dataset.iloc[:, 0].values
@@ -33,17 +34,6 @@ def train(num_trees, dataset_path, save_model_path):
         normalize="pred"
     )
     plt.savefig("confusion_matrix.png", pad_inches = 2, dpi = 300)
-    # predictions = classifier.predict(X_Test)
-    # cf_matrix = confusion_matrix(Y_Test, predictions)
-    # plt.imshow(cf_matrix, cmap='viridis')
-    # plt.colorbar()
-    # plt.savefig("confusion_matrix.png", pad_inches = 1, dpi = 300)
-    # cf_matrix_plot = sns.heatmap(cf_matrix/np.sum(cf_matrix), annot=True, fmt='.2%', cmap='Blues')
-    # cf_matrix_plot.get_figure().savefig("confusion_matrix.png", pad_inches = 1, dpi = 300)
-    
-
-    #with open(save_mapping, 'w') as f:
-    #    json.dump(id_to_class_mapping, f)
 
 if __name__ == '__main__':
     ap = args.ArgumentParser(prog='Random Forest Classifier', parents=[get_parent_args()])

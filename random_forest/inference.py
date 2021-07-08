@@ -1,9 +1,5 @@
-import joblib
 import json
-
-def load_model(model_weights_path):
-    classifier = joblib.load(model_weights_path)
-    return classifier
+from ..utils import load_model
 
 def predict_class(input_features, model_weights_path = "model.z", saved_mapping = "ids_to_class.json"):
     model = load_model(model_weights_path)

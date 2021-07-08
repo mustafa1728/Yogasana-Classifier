@@ -5,7 +5,11 @@ import json
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
+import joblib
 
+def load_model(model_weights_path):
+    classifier = joblib.load(model_weights_path)
+    return classifier
 
 def pre_process_labels(dataset):
     class_to_id_mapping = {} 
