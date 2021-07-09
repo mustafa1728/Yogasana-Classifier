@@ -10,8 +10,8 @@ import joblib
 
 model_path='model_subsampled.z'
 scaler_path='scalar.pkl'
-key_pt_path='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj001_Garudasana/alphapose-results.json'
-frames_folder='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj001_Garudasana/vis'
+key_pt_path='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj003_Gorakshasana/alphapose-results.json'
+frames_folder='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj003_Gorakshasana/vis'
 
 id_to_class_map = None
 with open('ids_to_class.json', 'r') as f:
@@ -50,7 +50,7 @@ def create_video_with_proba(frames_folder, classifier, scaler, path_to_kp, id_to
 
     for k in range(len(key_pts)):
         plt.rcdefaults()
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(8, 6))
         x = scaler.transform(np.array([key_pts[k]['keypoints']]))
         predictions = classifier.predict_proba(x)
         try:
@@ -64,6 +64,8 @@ def create_video_with_proba(frames_folder, classifier, scaler, path_to_kp, id_to
         ax.set_yticklabels(class_names)
         ax.invert_yaxis()
         ax.set_xlabel('Probability')
+        ax.set_xticks([])
+        ax.axes.xaxis.set_visible(False)
         ax.set_title('Yogasana Classifier')
         fig.savefig(os.path.join(save_folder, 'prob_{}.png'.format(k)), dpi=400, bbox_inches='tight')
         plt.close(fig)
