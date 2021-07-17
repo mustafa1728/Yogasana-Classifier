@@ -24,7 +24,7 @@ logging.basicConfig(filename="logs.txt",
 					format='%(levelname)-6s | %(message)s',
 					level=logging.WARNING)
 
-final_dict = {"class": []}
+final_dict = {"camera": [], "subject": [], "asana": [], "class": []}
 for i in range(136):
 	for j in range(3):
 		final_dict["keypt" + "_" + str(i) + "_" + str(j)] = []
@@ -84,6 +84,11 @@ def get_asana_id(asana, direction):
 	'''
 	return asana + "_" + direction
 
+def update_dict(asana, subject, camera):
+	final_dict["asana"].append(asana)
+	final_dict["subject"].append(subject)
+	final_dict["camera"].append(camera)
+
 def main():
 	for i, (asana, subject_id) in enumerate(zip(time_stamps["aasana"], time_stamps["subject"])):
 		if pd.isnull(subject_id) or pd.isnull(asana):
@@ -117,23 +122,16 @@ def main():
 		if none_frame_list is not None:
 			for frame_no in none_frame_list:
 				final_dict["class"].append("None")
+				update_dict(asana, subject_id, camera_mapping[asana])
 				for j in range(136):
 					for k in range(3):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
-
-		none_frame_list = get_frame_no_list(fps, end_time_right, total_frames, total_frames, no_frames_per_video//20)
-		if none_frame_list is not None:
-			for frame_no in none_frame_list:
-				final_dict["class"].append("None")
-				for j in range(136):
-					for k in range(3):
-						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
-
 
 		frame_no_list = get_frame_no_list(fps, start_time, end_time, total_frames)
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "left"))
+				update_dict(asana, subject_id, camera_mapping[asana])
 				for j in range(136):
 					for k in range(3):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
@@ -142,10 +140,12 @@ def main():
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "right"))
+				update_dict(asana, subject_id, camera_mapping[asana])
 				for j in range(136):
 					for k in range(3):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
 
+		
 
 	df = pd.DataFrame(final_dict)
 	df.to_csv("dataset.csv", index = False)
