@@ -6,7 +6,7 @@ import numpy as np
 
 def gen_camera_wise_folds(X, Y, cameras):
     
-    all_cameras = ["1", "2", "3", "4"]
+    all_cameras = [1, 2, 3, 4]
     fold_root_dir_path = "camera_wise_fold"
     fold_dir_templ = "fold_cam_{}"
     os.makedirs(fold_root_dir_path, exist_ok=True)
@@ -15,10 +15,10 @@ def gen_camera_wise_folds(X, Y, cameras):
 
     for cam in all_cameras:
         print(cameras[:5], cam)
-        X_train = X[cameras==cam]
-        Y_train = Y[cameras==cam]
-        X_test = X[cameras!=cam]
-        Y_test = Y[cameras!=cam]
+        X_train = X[~(cameras==cam)]
+        Y_train = Y[~(cameras==cam)]
+        X_test = X[(cameras==cam)]
+        Y_test = Y[(cameras==cam)]
 
         print(X.shape, X_train.shape)
         print(Y.shape, Y_train.shape)
@@ -122,7 +122,7 @@ def main(dataset_path):
     Y = dataset.iloc[:, 3].values
     # X, Y, classes = sub_sample(X, Y, dataset["class"].value_counts().to_dict())
     
-    # gen_camera_wise_folds(X, Y, cameras=dataset.iloc[:, 0].apply(lambda x: int(x)).values)
+    gen_camera_wise_folds(X, Y, cameras=dataset.iloc[:, 0].apply(lambda x: int(x)).values)
     gen_subj_wise_folds(X, Y, subjects=dataset.iloc[:, 1].apply(lambda x: int(x[-3:])).values)
 
 if __name__ == '__main__':
