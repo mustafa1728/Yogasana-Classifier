@@ -18,13 +18,13 @@ class_to_id_mapping = {}
 id_to_class_mapping = {}
 
 def pre_process_labels(dataset):
+    dataset["class"] = dataset["class"].apply(lambda x: still_left_to_still(x))
+    dataset["class"] = dataset["class"].apply(lambda x: condition(x))
     classes = list(dataset["class"].unique())
     for i in range(len(classes)):
         class_to_id_mapping[classes[i]] = i
         id_to_class_mapping[i] = classes[i]
-    dataset["class"] = dataset["class"].apply(lambda x: condition(x))
     dataset["class"] = dataset["class"].apply(lambda x:class_to_id_mapping[x])
-    dataset["class"] = dataset["class"].apply(lambda x: still_left_to_still(x))
     return dataset
 
 def still_left_to_still(x):
@@ -35,7 +35,7 @@ def still_left_to_still(x):
 
 def condition(x):
     if x == "None": 
-        return "Still_left" 
+        return "Still" 
     else:  
         return x
 
