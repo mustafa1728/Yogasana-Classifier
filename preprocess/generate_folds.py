@@ -32,7 +32,7 @@ def gen_camera_wise_folds(X, Y, cameras):
         np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
 
 
-def gen_subj_wise_folds(X, Y, subjects, no_folds = 10, subjects_per_fold = 5):
+def gen_subj_wise_folds(X, Y, subjects, no_folds = 10, subjects_per_fold = 10):
     
     no__subjects = 52
     fold_root_dir_path = "subject_wise_fold"
@@ -92,13 +92,15 @@ def pre_process_labels(dataset):
     return dataset
 
 # can be imported
-def sub_sample(X, Y, class_counts):
+def sub_sample(X, Y, class_counts, cameras, subjects):
     no_samples_per_class = 6000
     classes = [cls for cls in list(class_counts.keys())[:12] ]
 
     rng = np.random.default_rng(1)
     X_subset_list = []
     Y_subset_list = []
+    cam_subset_list = []
+    subj_subset_list = []
 
     for cls in classes:
         total_samples = X[Y==cls]
@@ -107,10 +109,16 @@ def sub_sample(X, Y, class_counts):
         
         X_subset_list.append(total_samples[idx])
         Y_subset_list.append(total_labels[idx])
+        total_cams = cameras[Y==cls]
+        total_subjs = subjects[Y==cls]
+        cam_subset_list.append(total_cams[idx])
+        subj_subset_list.append(total_subjs[idx])
 
     X_subset = np.concatenate(X_subset_list, axis = 0)
     Y_subset = np.concatenate(Y_subset_list, axis = 0)
-    return X_subset, Y_subset, classes
+    cams_subset = np.concatenate(cam_subset_list, axis = 0)
+    subj_subset = np.concatenate(subj_subset_list, axis = 0)
+    return X_subset, Y_subset, classes, cams_subset, subj_subset
 
 def main(dataset_path):
     dataset = pd.read_csv(dataset_path)
@@ -120,10 +128,12 @@ def main(dataset_path):
     dataset = pre_process_labels(dataset)
     X = dataset.iloc[:, 4:].values
     Y = dataset.iloc[:, 3].values
-    # X, Y, classes = sub_sample(X, Y, dataset["class"].value_counts().to_dict())
+    cameras = dataset.iloc[:, 0].apply(lambda x: int(x)).values
+    subjects = dataset.iloc[:, 1].apply(lambda x: int(x[-3:])).values
+    X, Y, classes, cameras, subjects = sub_sample(X, Y, dataset["class"].value_counts().to_dict(), cameras, subjects)
     
-    gen_camera_wise_folds(X, Y, cameras=dataset.iloc[:, 0].apply(lambda x: int(x)).values)
-    gen_subj_wise_folds(X, Y, subjects=dataset.iloc[:, 1].apply(lambda x: int(x[-3:])).values)
+    gen_camera_wise_folds(X, Y, cameras)
+    gen_subj_wise_folds(X, Y, subjects)
 
 if __name__ == '__main__':
     main("../../dataset.csv")
