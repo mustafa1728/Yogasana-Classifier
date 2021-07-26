@@ -162,7 +162,7 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path =
         k_fold_data["confusion_plot_path"].append(confusion_plot_path)
     
 
-    save_results_path = str(n_splits)+"-fold_cross-validation_results_subsampled.csv"
+    save_results_path = "{}-fold_cross-validation_results_max_depth_{}.csv".format(n_splits, max_depth)
     df = pd.DataFrame(k_fold_data)
     df.to_csv(save_results_path, index = False)
 

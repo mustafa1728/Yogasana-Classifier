@@ -1,0 +1,5 @@
+path,fold,accuracy
+../preprocess/camera_wise_fold/fold_cam_3,0,0.4734519711002279
+../preprocess/camera_wise_fold/fold_cam_2,1,0.6220555760029445
+../preprocess/camera_wise_fold/fold_cam_1,2,0.6446728602490611
+../preprocess/camera_wise_fold/fold_cam_4,3,0.5881270133456051
