@@ -171,9 +171,9 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path =
     print("Worst accuracy for "+str(n_splits)+"-fold cross-validation is: ", worst_accuracy*100, "%")
     print("Average accuracy for "+str(n_splits)+"-fold cross-validation is: ", average_accuracy*100, "%")
 
-    k_fold_data["Average Accuracy"] = ['{0:.2f}%'.format(average_accuracy*100)]
-    k_fold_data["Worst Accuracy"] = ['{0:.2f}%'.format(worst_accuracy*100)]
-    k_fold_data["Best Accuracy"] = ['{0:.2f}%'.format(best_accuracy*100)]
+    # k_fold_data["Average Accuracy"] = ['{0:.2f}%'.format(average_accuracy*100)]
+    # k_fold_data["Worst Accuracy"] = ['{0:.2f}%'.format(worst_accuracy*100)]
+    # k_fold_data["Best Accuracy"] = ['{0:.2f}%'.format(best_accuracy*100)]
     df = pd.DataFrame(k_fold_data)
     df.to_csv(save_results_path, index = False)
 
