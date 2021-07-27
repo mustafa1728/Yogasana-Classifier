@@ -4,21 +4,29 @@ import pandas as pd
 import logging
 import numpy as np
 
-def gen_camera_wise_folds(X, Y, cameras):
+def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
     
-    all_cameras = [1, 2, 3, 4]
+    if all_camera_folds is None:
+        all_camera_folds = [
+            [1], [2], [3], [4], 
+            [1, 3], [1, 4], [2, 3], [2, 4], 
+            [2, 3, 4], [1, 3, 4], [1, 2, 4], [1, 2, 3]
+        ]
     fold_root_dir_path = "camera_wise_fold"
     fold_dir_templ = "fold_cam_{}"
     os.makedirs(fold_root_dir_path, exist_ok=True)
 
-    
+    print("cam 1: ", len([0 for cam in cameras if cam == 1]))
+    print("cam 2: ", len([0 for cam in cameras if cam == 2]))
+    print("cam 3: ", len([0 for cam in cameras if cam == 3]))
+    print("cam 4: ", len([0 for cam in cameras if cam == 4]))
 
-    for cam in all_cameras:
-        print(cameras[:5], cam)
-        X_train = X[~(cameras==cam)]
-        Y_train = Y[~(cameras==cam)]
-        X_test = X[(cameras==cam)]
-        Y_test = Y[(cameras==cam)]
+    for cam in all_camera_folds:
+        print(cam)
+        X_train = np.asarray([X[i] for i in range(len(X)) if not cameras[i] in cam] )
+        Y_train = np.asarray([Y[i] for i in range(len(Y)) if not cameras[i] in cam] )
+        X_test = np.asarray([X[i] for i in range(len(X)) if cameras[i] in cam] )
+        Y_test = np.asarray([Y[i] for i in range(len(Y)) if cameras[i] in cam] )
 
         print(X.shape, X_train.shape)
         print(Y.shape, Y_train.shape)
@@ -133,7 +141,7 @@ def main(dataset_path):
     X, Y, classes, cameras, subjects = sub_sample(X, Y, dataset["class"].value_counts().to_dict(), cameras, subjects)
     
     gen_camera_wise_folds(X, Y, cameras)
-    gen_subj_wise_folds(X, Y, subjects)
+    # gen_subj_wise_folds(X, Y, subjects)
 
 if __name__ == '__main__':
     main("../../dataset.csv")

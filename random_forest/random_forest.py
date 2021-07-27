@@ -45,8 +45,8 @@ def get_dataset(dataset_path):
     indices_to_keep = ~dataset.isin([np.nan, np.inf, -np.inf]).any(1)
     dataset = dataset[indices_to_keep]
     dataset = pre_process_labels(dataset)
-    X = dataset.iloc[:, 1:].values
-    Y = dataset.iloc[:, 0].values
+    X = dataset.iloc[:, 4:].values
+    Y = dataset.iloc[:, 3].values
     X, Y, classes = sub_sample(X, Y, dataset["class"].value_counts().to_dict())
     return X, Y, classes
 
@@ -72,8 +72,8 @@ def sub_sample(X, Y, class_counts):
 
 def save_confusion(classifier, X_Test, Y_Test, classes, save_path = "confusion_matrix_sub_sampled.png"):
     fig, ax = plt.subplots(figsize=(20, 16))
-    print(classes)
-    print(id_to_class_mapping)
+    # print(classes)
+    # print(id_to_class_mapping)
     plot_confusion_matrix(
         classifier, 
         X_Test, Y_Test, ax=ax,
@@ -127,7 +127,7 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path =
     X, Y, classes = get_dataset(dataset_path)
     
     kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
-    cfms_path = str(n_splits)+"-fold_cfms_subsampled"
+    cfms_path = "{}-fold_cfms_subsampled_depth_{}".format(n_splits, max_depth)
     os.makedirs(cfms_path, exist_ok = True) 
     sc_X = StandardScaler()
     best_accuracy = None
@@ -177,6 +177,7 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path =
     df = pd.DataFrame(k_fold_data)
     df.to_csv(save_results_path, index = False)
 
-
-# train(no_trees = 500, max_depth = 6, dataset_path = "../preprocess/dataset.csv", save_model_path = "model_subsampled.z")
-Kfold_cross_val(n_splits = 10, no_trees=500, max_depth = 6, dataset_path = "../preprocess/dataset.csv", save_model_path = "10-fold_best_model_subsampled.z")
+# for i in range(9, 15):
+#     print("value of depth: ", i)
+#     train(no_trees = 500, max_depth = i, dataset_path = "../../dataset.csv", save_model_path = "model_subsampled_temp.z")
+Kfold_cross_val(n_splits = 10, no_trees=500, max_depth = 8, dataset_path = "../../dataset.csv", save_model_path = "10-fold_best_model_subsampled.z")
