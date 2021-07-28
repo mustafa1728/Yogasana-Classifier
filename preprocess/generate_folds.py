@@ -23,10 +23,12 @@ def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
 
     for cam in all_camera_folds:
         print(cam)
-        X_train = np.asarray([X[i] for i in range(len(X)) if not cameras[i] in cam] )
-        Y_train = np.asarray([Y[i] for i in range(len(Y)) if not cameras[i] in cam] )
-        X_test = np.asarray([X[i] for i in range(len(X)) if cameras[i] in cam] )
-        Y_test = np.asarray([Y[i] for i in range(len(Y)) if cameras[i] in cam] )
+        mask = np.array([c in cam for c in cameras])
+
+        X_train = X[~mask]
+        Y_train = Y[~mask]
+        X_test = X[mask]
+        Y_test = Y[mask]
 
         print(X.shape, X_train.shape)
         print(Y.shape, Y_train.shape)
@@ -40,24 +42,30 @@ def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
         np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
 
 
-def gen_subj_wise_folds(X, Y, subjects, no_folds = 10, subjects_per_fold = 10):
+def gen_subj_wise_folds(X, Y, subjects, no_folds = 5):
     
-    no__subjects = 52
+    no__subjects = 51
+    subjects_per_fold = no__subjects//no_folds
     fold_root_dir_path = "subject_wise_fold"
     fold_dir_templ = "fold_subj_{}"
     os.makedirs(fold_root_dir_path, exist_ok=True)
     rng = np.random.default_rng(1)
 
-    for i in range(no_folds):
-        fold_subjs = rng.choice(no__subjects, size = subjects_per_fold, replace = False)
-        cond = False
-        for sub in fold_subjs:
-            cond = cond | (subjects == sub)
+    idx_list = rng.permutation(no__subjects) + 1
 
-        X_train = X[~cond]
-        Y_train = Y[~cond]
-        X_test = X[cond]
-        Y_test = Y[cond]
+
+    for i in range(no_folds):
+        if i==no_folds-1:
+            fold_subjs = idx_list[i*subjects_per_fold : ]
+        else:
+            fold_subjs = idx_list[i*subjects_per_fold : (i+1)*subjects_per_fold]
+        
+        mask = np.array([sub in fold_subjs for sub in subjects])
+        
+        X_train = np.array(~mask)
+        Y_train = Y[~mask]
+        X_test = X[mask]
+        Y_test = Y[mask]
 
         subjs_string = "subjs"
         for sub in fold_subjs:
