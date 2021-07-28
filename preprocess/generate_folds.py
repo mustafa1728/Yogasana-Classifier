@@ -42,7 +42,7 @@ def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
         np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
 
 
-def gen_subj_wise_folds(X, Y, subjects, no_folds = 5):
+def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
     
     no__subjects = 51
     subjects_per_fold = no__subjects//no_folds
@@ -59,10 +59,10 @@ def gen_subj_wise_folds(X, Y, subjects, no_folds = 5):
             fold_subjs = idx_list[i*subjects_per_fold : ]
         else:
             fold_subjs = idx_list[i*subjects_per_fold : (i+1)*subjects_per_fold]
-        
+        print(fold_subjs)
         mask = np.array([sub in fold_subjs for sub in subjects])
         
-        X_train = np.array(~mask)
+        X_train = X[~mask]
         Y_train = Y[~mask]
         X_test = X[mask]
         Y_test = Y[mask]
@@ -148,8 +148,8 @@ def main(dataset_path):
     subjects = dataset.iloc[:, 1].apply(lambda x: int(x[-3:])).values
     X, Y, classes, cameras, subjects = sub_sample(X, Y, dataset["class"].value_counts().to_dict(), cameras, subjects)
     
-    gen_camera_wise_folds(X, Y, cameras)
-    # gen_subj_wise_folds(X, Y, subjects)
+    # gen_camera_wise_folds(X, Y, cameras)
+    gen_subj_wise_folds(X, Y, subjects)
 
 if __name__ == '__main__':
     main("../../dataset.csv")
