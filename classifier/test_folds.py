@@ -1,26 +1,9 @@
-from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 import os
-import joblib
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 from numpy import genfromtxt
-import matplotlib.pyplot as plt
-import joblib
-from sklearn.metrics import plot_confusion_matrix
-
-def save_confusion(classifier, X_Test, Y_Test, display_labels=None, save_path = "confusion_matrix.png"):
-    fig, ax = plt.subplots(figsize=(15, 12))
-    plot_confusion_matrix(
-        classifier, 
-        X_Test, Y_Test, ax=ax,
-        display_labels=display_labels, 
-        cmap=plt.cm.Blues,
-        normalize="pred",
-        xticks_rotation = "vertical"
-    )
-    plt.savefig(save_path, dpi = 300)
-
+from ..utils import save_confusion
 
 def test(X_train, Y_train, X_test, Y_test, confusion_path, no_trees):
     sc_X = StandardScaler()

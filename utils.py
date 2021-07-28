@@ -14,17 +14,67 @@ def load_model(model_weights_path):
     classifier = joblib.load(model_weights_path)
     return classifier
 
+
+def sub_sample(X, Y, class_counts):
+    no_samples_per_class = 6000
+    classes = [cls for cls in list(class_counts.keys())[:12] ]
+
+    rng = np.random.default_rng(1)
+    X_subset_list = []
+    Y_subset_list = []
+
+    for cls in classes:
+        total_samples = X[Y==cls]
+        total_labels = Y[Y==cls]
+        idx = rng.choice(total_samples.shape[0], size = no_samples_per_class, replace = False)
+        
+        X_subset_list.append(total_samples[idx])
+        Y_subset_list.append(total_labels[idx])
+
+    X_subset = np.concatenate(X_subset_list, axis = 0)
+    Y_subset = np.concatenate(Y_subset_list, axis = 0)
+    return X_subset, Y_subset, classes
+
+def pre_process_labels(dataset, save_mapping_path = None):
+    class_to_id_mapping = {}
+    id_to_class_mapping = {}
+    dataset["class"] = dataset["class"].apply(lambda x: still_left_to_still(x))
+    dataset["class"] = dataset["class"].apply(lambda x: condition(x))
+    classes = list(dataset["class"].unique())
+    for i in range(len(classes)):
+        class_to_id_mapping[classes[i]] = i
+        id_to_class_mapping[i] = classes[i]
+    dataset["class"] = dataset["class"].apply(lambda x:class_to_id_mapping[x])
+    if save_mapping_path is not None:
+        with open(save_mapping_path, 'w') as f:
+            json.dump(id_to_class_mapping, f)
+    return dataset
+
+def still_left_to_still(x):
+    if x == "Still_left": 
+        return "Still" 
+    else:  
+        return x
+
+def condition(x):
+    if x == "None": 
+        return "Still" 
+    else:  
+        return x
+
 def get_dataset(dataset_path):
     dataset = pd.read_csv(dataset_path)
-    dataset = pre_process_labels(dataset)
+    dataset.dropna(inplace=True)
     indices_to_keep = ~dataset.isin([np.nan, np.inf, -np.inf]).any(1)
     dataset = dataset[indices_to_keep]
-    X = dataset.iloc[:, 1:].values
-    Y = dataset.iloc[:, 0].values
-    return X, Y
+    dataset = pre_process_labels(dataset)
+    X = dataset.iloc[:, 4:].values
+    Y = dataset.iloc[:, 3].values
+    X, Y, classes = sub_sample(X, Y, dataset["class"].value_counts().to_dict())
+    return X, Y, classes
 
 def save_confusion(classifier, X_Test, Y_Test, display_labels=None, save_path = "confusion_matrix.png"):
-    fig, ax = plt.subplots(figsize=(20, 16))
+    fig, ax = plt.subplots(figsize=(15, 12))
     plot_confusion_matrix(
         classifier, 
         X_Test, Y_Test, ax=ax,
@@ -34,17 +84,6 @@ def save_confusion(classifier, X_Test, Y_Test, display_labels=None, save_path = 
         xticks_rotation = "vertical"
     )
     plt.savefig(save_path, dpi = 300)
-
-def pre_process_labels(dataset):
-    class_to_id_mapping = {} 
-    id_to_class_mapping = {}
-
-    classes = list(dataset["class"].unique())
-    for i in range(len(classes)):
-        class_to_id_mapping[classes[i]] = i
-        id_to_class_mapping[i] = classes[i]
-    dataset["class"] = dataset["class"].apply(lambda x:class_to_id_mapping[x])
-    return dataset, class_to_id_mapping, id_to_class_mapping
 
 def create_train_test(X, Y, test_size):
     # Splitting the dataset into the Training set and Test set

@@ -1,93 +1,18 @@
-import numpy as np
-import json
-import matplotlib.pyplot as plt
-from numpy.core.fromnumeric import size
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import confusion_matrix, plot_confusion_matrix
 from sklearn.metrics import accuracy_score
 from lightgbm import LGBMClassifier
-from sklearn.model_selection import StratifiedShuffleSplit
 import joblib
 from sklearn.model_selection import StratifiedKFold
 import os
 import pickle
 
+from ..utils import get_dataset, save_confusion
 
-class_to_id_mapping = {}
-id_to_class_mapping = {}
-
-def pre_process_labels(dataset):
-    dataset["class"] = dataset["class"].apply(lambda x: still_left_to_still(x))
-    dataset["class"] = dataset["class"].apply(lambda x: condition(x))
-    classes = list(dataset["class"].unique())
-    for i in range(len(classes)):
-        class_to_id_mapping[classes[i]] = i
-        id_to_class_mapping[i] = classes[i]
-    dataset["class"] = dataset["class"].apply(lambda x:class_to_id_mapping[x])
-    return dataset
-
-def still_left_to_still(x):
-    if x == "Still_left": 
-        return "Still" 
-    else:  
-        return x
-
-def condition(x):
-    if x == "None": 
-        return "Still" 
-    else:  
-        return x
-
-def get_dataset(dataset_path):
-    dataset = pd.read_csv(dataset_path)
-    dataset.dropna(inplace=True)
-    indices_to_keep = ~dataset.isin([np.nan, np.inf, -np.inf]).any(1)
-    dataset = dataset[indices_to_keep]
-    dataset = pre_process_labels(dataset)
-    X = dataset.iloc[:, 4:].values
-    Y = dataset.iloc[:, 3].values
-    X, Y, classes = sub_sample(X, Y, dataset["class"].value_counts().to_dict())
-    return X, Y, classes
-
-def sub_sample(X, Y, class_counts):
-    no_samples_per_class = 6000
-    classes = [cls for cls in list(class_counts.keys())[:12] ]
-
-    rng = np.random.default_rng(1)
-    X_subset_list = []
-    Y_subset_list = []
-
-    for cls in classes:
-        total_samples = X[Y==cls]
-        total_labels = Y[Y==cls]
-        idx = rng.choice(total_samples.shape[0], size = no_samples_per_class, replace = False)
-        
-        X_subset_list.append(total_samples[idx])
-        Y_subset_list.append(total_labels[idx])
-
-    X_subset = np.concatenate(X_subset_list, axis = 0)
-    Y_subset = np.concatenate(Y_subset_list, axis = 0)
-    return X_subset, Y_subset, classes
-
-def save_confusion(classifier, X_Test, Y_Test, classes, save_path = "confusion_matrix_sub_sampled.png"):
-    fig, ax = plt.subplots(figsize=(20, 16))
-    # print(classes)
-    # print(id_to_class_mapping)
-    plot_confusion_matrix(
-        classifier, 
-        X_Test, Y_Test, ax=ax,
-        display_labels=[id_to_class_mapping[cls] for cls in classes], 
-        cmap=plt.cm.Blues,
-        normalize="pred",
-        xticks_rotation = "vertical"
-    )
-    plt.savefig(save_path, dpi = 300)
-
-def train(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", save_mapping = "ids_to_class.json", model = "adaboost"):
+def train(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", model = "adaboost"):
 
     X, Y, classes = get_dataset(dataset_path)
 
@@ -118,20 +43,6 @@ def train(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_mode
     print("The {} classifier with {} decision trees has an accuracy of {}%".format(model, no_trees, 100*accuracy))
     
     save_confusion(classifier, X_Test, Y_Test, classes)
-    
-    with open(save_mapping, 'w') as f:
-        json.dump(id_to_class_mapping, f)
-
-def load_model(model_weights_path):
-    classifier = joblib.load(model_weights_path)
-    return classifier
-
-def predict_class(input_features, model_weights_path = "model.z", saved_mapping = "ids_to_class.json"):
-    model = load_model(model_weights_path)
-    class_pred = model.predict([input_features])
-    with open(saved_mapping) as f:
-        id_to_class_mapping = json.load(f)
-    return id_to_class_mapping[class_pred]
 
 def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", model = "adaboost"):
     X, Y, classes = get_dataset(dataset_path)
