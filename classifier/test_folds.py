@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from numpy import genfromtxt
-from ..utils import AccuracyMeter
+from utils import AccuracyMeter
 from model import Classifier
 
 def evaluate_fold(folder_path, confusion_path= "confusion_fold.png", method = "random_forest", max_depth = 8, no_trees = 500, lr = 5):

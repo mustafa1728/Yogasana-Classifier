@@ -4,11 +4,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
-from lightgbm import LGBMClassifier
+# from lightgbm import LGBMClassifier
 import joblib
 import pickle
 
-from ..utils import get_dataset, save_confusion
+from utils import get_dataset, save_confusion
 
 class Classifier():
     '''
@@ -34,9 +34,9 @@ class Classifier():
 
     def train(self, X_train, Y_train):
         if self.method == "adaboost":
-            self.model = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=self.max_depth), n_estimators = self.no_estimators, random_state = self.random_state)
+            self.model = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=self.max_depth), n_estimators = self.no_estimators, random_state = self.random_state, learning_rate=self.lr)
         elif self.method == "random_forest":
-            self.model = RandomForestClassifier(n_estimators = self.no_estimators, criterion = 'entropy', random_state = self.random_state, max_depth=self.max_depth, learning_rate=self.lr)
+            self.model = RandomForestClassifier(n_estimators = self.no_estimators, criterion = 'entropy', random_state = self.random_state, max_depth=self.max_depth)
         elif self.method == "LGBM":
             self.model = LGBMClassifier(boosting_type='goss', max_depth=self.max_depth, n_estimators = self.no_estimators, random_state = self.random_state, learning_rate=self.lr)
         self.model.fit(X_train,Y_train)
