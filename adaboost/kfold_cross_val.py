@@ -26,7 +26,7 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, dataset_path = "dataset.csv",
         Y_Train, Y_Test = Y[train_index], Y[test_index]
         X_Train = sc_X.fit_transform(X_Train)
         X_Test = sc_X.transform(X_Test)
-        classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=8), n_estimators = no_trees, random_state = 0)
+        classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=8), n_estimators = no_trees, random_state = 0, learning_rate=5.0)
         classifier.fit(X_Train, Y_Train)
         accuracy = classifier.score(X_Test, Y_Test)
         print("The Adaboost on fold"+str(fold_id)+" with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
