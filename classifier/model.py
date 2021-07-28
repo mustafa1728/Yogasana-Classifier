@@ -6,106 +6,85 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from lightgbm import LGBMClassifier
 import joblib
-from sklearn.model_selection import StratifiedKFold
-import os
 import pickle
 
 from ..utils import get_dataset, save_confusion
 
-def train(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", model = "adaboost"):
+class Classifier():
+    '''
+        Generic classifier 
+        Currently supported methods:
+            adaboost
+            random_forest
+            LGBM
+        Parameters: 
+            max_depth       : maximum depth of any tree
+            no_estimators   : number of trees in the ensemble
+            lr              : the learning rate required by AdaBoost and LGBM
+            random_state    : seed for random number generation. Used to make code reproducable
+    '''
+    def __init__(self, method, max_depth = 8, no_estimators = 500, lr = 0.5, random_state = 0):
+        self.method = method
+        self.max_depth = max_depth
+        self.no_estimators = no_estimators
+        self.random_state = random_state
+        self.lr = lr
+        self.model = None
+        self.sc_X = None
 
-    X, Y, classes = get_dataset(dataset_path)
+    def train(self, X_train, Y_train):
+        if self.method == "adaboost":
+            self.model = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=self.max_depth), n_estimators = self.no_estimators, random_state = self.random_state)
+        elif self.method == "random_forest":
+            self.model = RandomForestClassifier(n_estimators = self.no_estimators, criterion = 'entropy', random_state = self.random_state, max_depth=self.max_depth, learning_rate=self.lr)
+        elif self.method == "LGBM":
+            self.model = LGBMClassifier(boosting_type='goss', max_depth=self.max_depth, n_estimators = self.no_estimators, random_state = self.random_state, learning_rate=self.lr)
+        self.model.fit(X_train,Y_train)
+        return self.model
 
-    # Splitting the dataset into the Training set and Test set
-    X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size = 0.25, random_state = 0, stratify=Y)
+    def save_model(self, save_path):
+        joblib.dump(self.model, save_path)
 
-    # Feature Scaling
-    sc_X = StandardScaler()
-    X_Train = sc_X.fit_transform(X_Train)
-    X_Test = sc_X.transform(X_Test)
+    def load_model(self, model_path):
+        self.model = joblib.load(model_path)
+        return self.model
 
-    with open("scalar.pkl", "wb") as f:
-        pickle.dump(sc_X, f)
-
-    # Fitting the classifier into the Training set
-    if model == "adaboost":
-        classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=max_depth), n_estimators = no_trees, random_state = 0)
-    elif model == "random_forest":
-        classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'entropy', random_state = 0, max_depth=max_depth)
-    elif model == "LGBM":
-        classifier = LGBMClassifier(boosting_type='goss', max_depth=max_depth, n_estimators = no_trees, random_state = 0, learning_rate=0.5)
-    classifier.fit(X_Train,Y_Train)
-    joblib.dump(classifier, save_model_path)
-    if model == "LGBM":
-        accuracy = accuracy_score(Y_Test, classifier.predict(X_Test))
-    else:
-        accuracy = classifier.score(X_Test, Y_Test)
-    print("The {} classifier with {} decision trees has an accuracy of {}%".format(model, no_trees, 100*accuracy))
-    
-    save_confusion(classifier, X_Test, Y_Test, classes)
-
-def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", model = "adaboost"):
-    X, Y, classes = get_dataset(dataset_path)
-    
-    kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
-    cfms_path = "{}-fold_cfms_subsampled_depth_{}".format(n_splits, max_depth)
-    os.makedirs(cfms_path, exist_ok = True) 
-    sc_X = StandardScaler()
-    best_accuracy = None
-    worst_accuracy = None
-    average_accuracy = 0
-    fold_id = 0
-    k_fold_data = {"fold":[], "train_split_size": [], "test_split_size": [], "accuracy": [], "confusion_plot_path": []}
-    for train_index, test_index in kf.split(X, Y):
-        fold_id += 1
-        X_Train, X_Test = X[train_index], X[test_index]
-        Y_Train, Y_Test = Y[train_index], Y[test_index]
-        X_Train = sc_X.fit_transform(X_Train)
-        X_Test = sc_X.transform(X_Test)
-        if model == "adaboost":
-            classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=max_depth), n_estimators = no_trees, random_state = 0)
-        elif model == "random_forest":
-            classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'entropy', random_state = 0, max_depth = max_depth)
-        elif model == "LGBM":
-            classifier = LGBMClassifier(boosting_type='goss', max_depth=max_depth, n_estimators = no_trees, random_state = 0, learning_rate=0.5)
-        classifier.fit(X_Train, Y_Train)
-        if model == "LGBM":
-            accuracy = accuracy_score(Y_Test, classifier.predict(X_Test))
+    def evaluate(self, X_test, Y_test, model = None, confusion_path = None):
+        if model is None:
+            model = self.model
+        if self.method == "LGBM":
+            accuracy = accuracy_score(Y_test, model.predict(X_test))
         else:
-            accuracy = classifier.score(X_Test, Y_Test)
-        print("The {} classifier with {} decision trees has an accuracy of {}%".format(model, no_trees, 100*accuracy))
-        if best_accuracy is None or best_accuracy<=accuracy:
-            best_accuracy = accuracy
-            joblib.dump(classifier, save_model_path)
-        if worst_accuracy is None or worst_accuracy>=accuracy:
-            worst_accuracy = accuracy
-        average_accuracy += accuracy
-        
-        confusion_plot_path = os.path.join(cfms_path, "fold_"+str(fold_id))
-        save_confusion(classifier, X_Test, Y_Test, classes, confusion_plot_path)
-
-        k_fold_data["fold"].append(fold_id)
-        k_fold_data["train_split_size"].append(len(train_index))
-        k_fold_data["test_split_size"].append(len(test_index))
-        k_fold_data["accuracy"].append(accuracy)
-        k_fold_data["confusion_plot_path"].append(confusion_plot_path)
+            accuracy = model.score(X_test, Y_test)
+        if confusion_path is not None:
+            save_confusion(model, X_test, Y_test, save_path = confusion_path)
+        return accuracy
     
-    save_results_path = "{}_{}-fold_cross-validation_results_max_depth_{}.csv".format(model, n_splits, max_depth)
-    df = pd.DataFrame(k_fold_data)
-    df.to_csv(save_results_path, index = False)
+    def test(self, X_test, Y_test, model_path, confusion_path = None):
+        self.load(model_path)
+        return self.evaluate(X_test, Y_test, confusion_path = confusion_path)
 
-    average_accuracy = average_accuracy / n_splits
-    print("Best accuracy for "+str(n_splits)+"-fold cross-validation is: ", best_accuracy*100, "%")
-    print("Worst accuracy for "+str(n_splits)+"-fold cross-validation is: ", worst_accuracy*100, "%")
-    print("Average accuracy for "+str(n_splits)+"-fold cross-validation is: ", average_accuracy*100, "%")
+    def scale_vectors(self, X_train, X_test, scaler_save = None):
+        self.sc_X = StandardScaler()
+        X_train = self.sc_X.fit_transform(X_train)
+        X_test = self.sc_X.transform(X_test)
+        if scaler_save is not None:
+            with open(scaler_save, "wb") as f:
+                pickle.dump(self.sc_X, f)
+        return X_train, X_test
 
-    # k_fold_data["Average Accuracy"] = ['{0:.2f}%'.format(average_accuracy*100)]
-    # k_fold_data["Worst Accuracy"] = ['{0:.2f}%'.format(worst_accuracy*100)]
-    # k_fold_data["Best Accuracy"] = ['{0:.2f}%'.format(best_accuracy*100)]
-    df = pd.DataFrame(k_fold_data)
-    df.to_csv(save_results_path, index = False)
+def main(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", model = "adaboost"):
 
-# for i in range(9, 15):
-#     print("value of depth: ", i)
-#     train(no_trees = 500, max_depth = i, dataset_path = "../../dataset.csv", save_model_path = "model_subsampled_temp.z")
-Kfold_cross_val(n_splits = 10, no_trees=500, max_depth = 8, dataset_path = "../../dataset.csv", save_model_path = "10-fold_best_model_subsampled.z")
+    X, Y, _ = get_dataset(dataset_path)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.25, random_state = 0, stratify=Y)
+
+    classifier = Classifier(model, max_depth = max_depth, no_estimators = no_trees)
+
+    X_train, X_test = classifier.scale_vectors(X_train, X_test, "scaler.pkl")
+    classifier.train(X_train, Y_train)
+    classifier.save_model(save_model_path)
+    accuracy = classifier.evaluate(X_test, Y_test, confusion_path = "confusion_matrix.png")
+    print("The {} classifier with {} decision trees has an accuracy of {}%".format(model, no_trees, 100*accuracy))
+
+if __name__ == "__main__":
+    main()
