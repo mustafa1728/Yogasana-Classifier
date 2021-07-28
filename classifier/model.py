@@ -5,7 +5,8 @@ from numpy.core.fromnumeric import size
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import confusion_matrix, plot_confusion_matrix
 from sklearn.model_selection import StratifiedShuffleSplit
 import joblib
@@ -84,7 +85,7 @@ def save_confusion(classifier, X_Test, Y_Test, classes, save_path = "confusion_m
     )
     plt.savefig(save_path, dpi = 300)
 
-def train(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", save_mapping = "ids_to_class.json"):
+def train(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", save_mapping = "ids_to_class.json", model = "adaboost"):
 
     X, Y, classes = get_dataset(dataset_path)
 
@@ -100,12 +101,15 @@ def train(no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_mode
         pickle.dump(sc_X, f)
 
     # Fitting the classifier into the Training set
-    classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'gini', random_state = 11, max_depth=max_depth)
+    if model == "adaboost":
+        classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=8), n_estimators = no_trees, random_state = 0)
+    elif model == "random_forest":
+        classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'entropy', random_state = 0)
     classifier.fit(X_Train,Y_Train)
     joblib.dump(classifier, save_model_path)
 
     accuracy = classifier.score(X_Test, Y_Test)
-    print("The random forest with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
+    print("The classifier with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
     
     save_confusion(classifier, X_Test, Y_Test, classes)
     
@@ -123,7 +127,7 @@ def predict_class(input_features, model_weights_path = "model.z", saved_mapping 
         id_to_class_mapping = json.load(f)
     return id_to_class_mapping[class_pred]
 
-def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z"):
+def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", model = "adaboost"):
     X, Y, classes = get_dataset(dataset_path)
     
     kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
@@ -141,10 +145,13 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path =
         Y_Train, Y_Test = Y[train_index], Y[test_index]
         X_Train = sc_X.fit_transform(X_Train)
         X_Test = sc_X.transform(X_Test)
-        classifier = RandomForestClassifier(n_estimators = no_trees, max_depth=max_depth, criterion = 'gini', random_state = 11)
+        if model == "adaboost":
+            classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=8), n_estimators = no_trees, random_state = 0)
+        elif model == "random_forest":
+            classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'entropy', random_state = 0)
         classifier.fit(X_Train, Y_Train)
         accuracy = classifier.score(X_Test, Y_Test)
-        print("The random forest on fold"+str(fold_id)+" with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
+        print("The classifier on fold"+str(fold_id)+" with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
         if best_accuracy is None or best_accuracy<=accuracy:
             best_accuracy = accuracy
             joblib.dump(classifier, save_model_path)
@@ -161,8 +168,11 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, max_depth = 8, dataset_path =
         k_fold_data["accuracy"].append(accuracy)
         k_fold_data["confusion_plot_path"].append(confusion_plot_path)
     
+    if model == "adaboost":
+        save_results_path = "adaboost_{}-fold_cross-validation_results_max_depth_{}.csv".format(n_splits, max_depth)
+    elif model == "random_forest":
+        save_results_path = "rf_{}-fold_cross-validation_results_max_depth_{}.csv".format(n_splits, max_depth)
 
-    save_results_path = "{}-fold_cross-validation_results_max_depth_{}.csv".format(n_splits, max_depth)
     df = pd.DataFrame(k_fold_data)
     df.to_csv(save_results_path, index = False)
 

@@ -3,10 +3,11 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 import os
 import joblib
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
 
-def Kfold_cross_val(n_splits = 10, no_trees = 200, dataset_path = "dataset.csv", save_model_path = "model.z"):
+def Kfold_cross_val(n_splits = 10, no_trees = 200, dataset_path = "dataset.csv", save_model_path = "model.z", model = "adaboost"):
     X, Y = get_dataset(dataset_path)
     
     kf = KFold(n_splits=n_splits, shuffle=True)
@@ -25,10 +26,13 @@ def Kfold_cross_val(n_splits = 10, no_trees = 200, dataset_path = "dataset.csv",
         Y_Train, Y_Test = Y[train_index], Y[test_index]
         X_Train = sc_X.fit_transform(X_Train)
         X_Test = sc_X.transform(X_Test)
-        classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'entropy', random_state = 0)
+        if model == "adaboost":
+            classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=8), n_estimators = no_trees, random_state = 0)
+        elif model == "random_forest":
+            classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'entropy', random_state = 0)
         classifier.fit(X_Train, Y_Train)
         accuracy = classifier.score(X_Test, Y_Test)
-        print("The random forest on fold"+str(fold_id)+" with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
+        print("The classifier on fold"+str(fold_id)+" with "+str(no_trees)+" decision trees has an accuracy of "+str(100*accuracy)+ "%")
         if best_accuracy is None or best_accuracy<=accuracy:
             best_accuracy = accuracy
             joblib.dump(classifier, save_model_path)

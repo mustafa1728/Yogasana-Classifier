@@ -2,8 +2,7 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 import os
 import joblib
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 from numpy import genfromtxt
 import matplotlib.pyplot as plt
@@ -27,7 +26,7 @@ def test(X_train, Y_train, X_test, Y_test, confusion_path, no_trees):
     sc_X = StandardScaler()
     X_Train = sc_X.fit_transform(X_train)
     X_Test = sc_X.transform(X_test)
-    classifier = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=8), n_estimators = no_trees, random_state = 0, learning_rate=5.0)
+    classifier = RandomForestClassifier(n_estimators = no_trees, criterion = 'gini', random_state = 0, max_depth=8)
     classifier.fit(X_Train, Y_train)
     accuracy = classifier.score(X_Test, Y_test)
     print("curent fold has an accuracy of: ", accuracy)
@@ -55,7 +54,7 @@ def main():
         accuracies["path"].append(folders_list[i])
         accuracies["fold"].append(i)
     df = pd.DataFrame(accuracies)
-    df.to_csv("subject_wise_results.csv", index = False)
+    df.to_csv("subject_wise_results_10_fold.csv", index = False)
         
 if __name__ == "__main__":
     main()
