@@ -7,7 +7,7 @@ original_videos_root = "/mnt/project2/home/rahul/Yoga-Kinect/VideosAll/"
 root = "/home1/ee318062/"
 time_stamps = pd.read_csv("timestamps.csv")
 
-combined_csv = pd.read_csv("/mnt/project2/home/rahul/Yoga-Kinect/LinkedData/AllFiles-QC-Data.csv")
+combined_csv = pd.read_csv("/mnt/project/Yoga-Kinect/AllFiles-QC-Data.csv")
 
 # print(combined_csv.columns)
 
@@ -21,7 +21,7 @@ logging.basicConfig(filename="logs_kinect.txt",
 					format='%(levelname)-6s | %(message)s',
 					level=logging.INFO)
 
-final_dict = {"class": []}
+final_dict = {"subject": [], "asana": [], "class": []}
 for i in range(25):
 	for j in range(2):
 		final_dict["keypt" + "_" + str(i) + "_" + str(j)] = []
@@ -81,6 +81,10 @@ def get_asana_id(asana, direction):
 	'''
 	return asana + "_" + direction
 
+def update_dict(asana, subject):
+	final_dict["asana"].append(asana)
+	final_dict["subject"].append(subject)
+
 def main():
 	for i, (dir_path, subject_id, asana, suffix) in enumerate(zip(combined_csv[" directory pathname"], combined_csv["Subject"], combined_csv[" Asana"], combined_csv[" O/N"])):
 		if pd.isnull(dir_path) or pd.isnull(subject_id) or pd.isnull(asana) or pd.isnull(suffix):
@@ -119,6 +123,7 @@ def main():
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "left"))
+				update_dict(asana, subject_id)
 				for j in range(25):
 					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
@@ -127,6 +132,7 @@ def main():
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "right"))
+				update_dict(asana, subject_id)
 				for j in range(25):
 					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
@@ -135,6 +141,7 @@ def main():
 		if none_frame_list is not None:
 			for frame_no in none_frame_list:
 				final_dict["class"].append("None")
+				update_dict(asana, subject_id)
 				for j in range(25):
 					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))

@@ -25,21 +25,21 @@ def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
         print(cam)
         mask = np.array([c in cam for c in cameras])
 
-        X_train = X[~mask]
-        Y_train = Y[~mask]
-        X_test = X[mask]
-        Y_test = Y[mask]
+        #X_train = X[~mask]
+        #Y_train = Y[~mask]
+        #X_test = X[mask]
+        #Y_test = Y[mask]
 
-        print(X.shape, X_train.shape)
-        print(Y.shape, Y_train.shape)
+        #print(X.shape, X_train.shape)
+        #print(Y.shape, Y_train.shape)
 
         fold_path = os.path.join(fold_root_dir_path, fold_dir_templ.format(cam))
         os.makedirs(fold_path, exist_ok=True)
 
-        np.savetxt(os.path.join(fold_path, 'x_train.csv'), X_train, delimiter=',')
-        np.savetxt(os.path.join(fold_path, 'y_train.csv'), Y_train, delimiter=',')
-        np.savetxt(os.path.join(fold_path, 'x_test.csv'), X_test, delimiter=',')
-        np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
+        np.savetxt(os.path.join(fold_path, 'train_idx.txt'), np.arange(mask.shape[0])[~mask], delimiter='\n')
+        #np.savetxt(os.path.join(fold_path, 'y_train.csv'), Y_train, delimiter=',')
+        np.savetxt(os.path.join(fold_path, 'test_idx.txt'), np.arange(mask.shape[0])[mask], delimiter='\m')
+        #np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
 
 
 def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
@@ -62,10 +62,10 @@ def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
         print(fold_subjs)
         mask = np.array([sub in fold_subjs for sub in subjects])
         
-        X_train = X[~mask]
-        Y_train = Y[~mask]
-        X_test = X[mask]
-        Y_test = Y[mask]
+        #X_train = X[~mask]
+        #Y_train = Y[~mask]
+        #X_test = X[mask]
+        #Y_test = Y[mask]
 
         subjs_string = "subjs"
         for sub in fold_subjs:
@@ -73,10 +73,10 @@ def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
         fold_path = os.path.join(fold_root_dir_path, fold_dir_templ.format(subjs_string))
         os.makedirs(fold_path, exist_ok=True)
 
-        np.savetxt(os.path.join(fold_path, 'x_train.csv'), X_train, delimiter=',')
-        np.savetxt(os.path.join(fold_path, 'y_train.csv'), Y_train, delimiter=',')
-        np.savetxt(os.path.join(fold_path, 'x_test.csv'), X_test, delimiter=',')
-        np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
+        np.savetxt(os.path.join(fold_path, 'train_idx.txt'), np.arange(mask.shape[0])[~mask], delimiter='\n')
+        #np.savetxt(os.path.join(fold_path, 'y_train.csv'), Y_train, delimiter=',')
+        np.savetxt(os.path.join(fold_path, 'test_idx.txt'), np.arange(mask.shape[0])[mask], delimiter='\n')
+        #np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
 
 # can be imported
 def still_left_to_still(x):
@@ -148,8 +148,10 @@ def main(dataset_path):
     subjects = dataset.iloc[:, 1].apply(lambda x: int(x[-3:])).values
     X, Y, classes, cameras, subjects = sub_sample(X, Y, dataset["class"].value_counts().to_dict(), cameras, subjects)
     
-    # gen_camera_wise_folds(X, Y, cameras)
-    gen_subj_wise_folds(X, Y, subjects)
+    np.savetxt('X_sub_sampled.csv', X, delimiter=',')
+    np.savetxt('Y_sub_sampled.csv', Y, delimiter=',')
+    gen_camera_wise_folds(cameras)
+    gen_subj_wise_folds(subjects)
 
 if __name__ == '__main__':
-    main("../../dataset.csv")
+    main("dataset.csv")
