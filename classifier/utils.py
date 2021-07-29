@@ -121,7 +121,7 @@ class AccuracyMeter():
     def update(self, accuracy):
         self.average_accuracy = (self.average_accuracy*self.count + accuracy) / (self.count+1)
         self.count += 1
-        if self.worst_accuracy is None or accuracy<=self.best_accuracy:
+        if self.worst_accuracy is None or accuracy<=self.worst_accuracy:
             self.worst_accuracy = accuracy
         if self.best_accuracy is None or accuracy>=self.best_accuracy:
             self.best_accuracy = accuracy
