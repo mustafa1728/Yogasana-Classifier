@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
 # from lightgbm import LGBMClassifier
 import joblib
 import pickle
@@ -52,13 +52,20 @@ class Classifier():
     def evaluate(self, X_test, Y_test, model = None, confusion_path = None):
         if model is None:
             model = self.model
-        if self.method == "LGBM":
-            accuracy = accuracy_score(Y_test, model.predict(X_test))
-        else:
-            accuracy = model.score(X_test, Y_test)
+        metric_dict = {i:{'acc': 0, 'prec': 0, 'rec': 0, 'f1': 0} for i in model.classes_}
+        Y_pred = model.predict(X_test)
+        for i in model.classes_:
+            mask = Y_test == i
+            temp_y_test = Y_test[mask]
+            temp_y_pred = Y_pred[mask]
+            metric_dict[i]['acc'] = accuracy_score(temp_y_test, temp_y_pred)
+            metric_dict[i]['prec'] = precision_score(temp_y_test, temp_y_pred)
+            metric_dict[i]['rec'] = recall_score(temp_y_test, temp_y_pred)
+            metric_dict[i]['f1'] = f1_score(temp_y_test, temp_y_pred)
+        
         if confusion_path is not None:
             save_confusion(model, X_test, Y_test, save_path = confusion_path)
-        return accuracy
+        return metric_dict
     
     def test(self, X_test, Y_test, model_path, confusion_path = None):
         self.load(model_path)

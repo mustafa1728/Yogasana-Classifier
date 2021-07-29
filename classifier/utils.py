@@ -133,3 +133,14 @@ class AccuracyMeter():
         print("The best accuracy is: {:.2f}%".format(self.best_accuracy*100))
         print("The worst accuracy is: {:.2f}%".format(self.worst_accuracy*100))
         print("The average accuracy is: {:.2f}%".format(self.average_accuracy*100))
+
+    def merge_dicts(d1, d2, i):
+        for k in d2.keys():
+            if k not in d1:
+                d1[k] = {}
+            for p in d2[k].keys():
+                if p not in d1[k]:
+                    d1[k][p] = d2[k][p]
+                else:
+                    d1[k][p] = (d1[k][p]*i + d2[k][p])/(i+1)
+        return d1
