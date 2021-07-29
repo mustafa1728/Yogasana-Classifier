@@ -49,7 +49,7 @@ def main():
     df.to_csv("subject_wise_results_10_fold.csv", index = False)
 
     df_predictions = pd.DataFrame({"labels": Y, "predictions": predictions})
-    df_predictions.to_csv("predictions_subj_wise.csv")
+    df_predictions.to_csv("predictions_subj_wise.csv", index = False)
 
         
 if __name__ == "__main__":

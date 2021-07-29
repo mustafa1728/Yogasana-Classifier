@@ -16,7 +16,10 @@ def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path =
     fold_id = 0
     #k_fold_data = {"fold":[], "train_split_size": [], "test_split_size": [], "accuracy": [], "confusion_plot_path": []}
     md = {}
+    predictions = [-1 for i in range(len(Y))]
+
     for train_index, test_index in kf.split(X, Y):
+        print("done 1")
         fold_id += 1
         confusion_plot_path = os.path.join(cfms_path, "fold_"+str(fold_id))
 
@@ -29,11 +32,13 @@ def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path =
         classifier.train(X_train, Y_train)
         metric_dict = classifier.evaluate(X_test, Y_test, confusion_path = confusion_plot_path)
 
-        md = merge_dicts(md, metric_dict)
-        #print("The {} classifier with {} decision trees has an accuracy of {}%".format(method, no_trees, 100*accuracy))
+        predictions[test_index] = classifier.predict(X_test)
 
-        #is_best = accuracy_meter.update(accuracy)
-        #if is_best:
+        md = merge_dicts(md, metric_dict)
+        # print("The {} classifier with {} decision trees has an accuracy of {}%".format(method, no_trees, 100*accuracy))
+
+        # is_best = accuracy_meter.update(accuracy)
+        # if is_best:
         #    classifier.save_model(save_model_path)
 
         #k_fold_data["fold"].append(fold_id)
@@ -43,6 +48,9 @@ def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path =
         #k_fold_data["confusion_plot_path"].append(confusion_plot_path)
     
     #accuracy_meter.display()
+
+        df_predictions = pd.DataFrame({"labels": Y, "predictions": predictions})
+        df_predictions.to_csv("predictions_frame_wise.csv", index = False)
 
     save_results_path = "{}_{}-fold_cross-validation_results_max_depth_{}.csv".format(method, n_splits, max_depth)
     df = pd.DataFrame(md)
