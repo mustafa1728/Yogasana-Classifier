@@ -4,7 +4,7 @@ import pandas as pd
 import logging
 import numpy as np
 
-def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
+def gen_camera_wise_folds(cameras, all_camera_folds = None):
     
     if all_camera_folds is None:
         all_camera_folds = [
@@ -151,7 +151,7 @@ def main(dataset_path):
     np.savetxt('X_sub_sampled.csv', X, delimiter=',')
     np.savetxt('Y_sub_sampled.csv', Y, delimiter=',')
     gen_camera_wise_folds(cameras)
-    gen_subj_wise_folds(subjects)
+    # gen_subj_wise_folds(subjects)
 
 if __name__ == '__main__':
-    main("dataset.csv")
+    main("../../pre-process/dataset_all_camera.csv")
