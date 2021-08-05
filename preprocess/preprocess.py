@@ -14,7 +14,7 @@ camera_mapping = {"Still": 1}
 for index, row in camera_data.iterrows():
 	camera_mapping[row['asana']] = row["camera"]
 
-no_frames_per_video = 200
+no_frames_per_video = 210
 padding = 1
 asana_id_mapping = {}
 
@@ -24,7 +24,7 @@ logging.basicConfig(filename="logs.txt",
 					format='%(levelname)-6s | %(message)s',
 					level=logging.WARNING)
 
-final_dict = {"camera": [], "subject": [], "asana": [], "class": []}
+final_dict = {"camera": [], "subject": [], "asana": [], "class": [], "x0": [], "y0": [], "width": [], "height": []}
 for i in range(136):
 	for j in range(3):
 		final_dict["keypt" + "_" + str(i) + "_" + str(j)] = []
@@ -84,10 +84,14 @@ def get_asana_id(asana, direction):
 	'''
 	return asana + "_" + direction
 
-def update_dict(asana, subject, camera):
+def update_dict(asana, subject, camera, x0, y0, w, h):
 	final_dict["asana"].append(asana)
 	final_dict["subject"].append(subject)
 	final_dict["camera"].append(camera)
+	final_dict["x0"].append(x0)
+	final_dict["y0"].append(y0)
+	final_dict["width"].append(w)
+	final_dict["height"].append(h)
 
 def main():
 	for i, (asana, subject_id) in enumerate(zip(time_stamps["aasana"], time_stamps["subject"])):
@@ -122,7 +126,8 @@ def main():
 		if none_frame_list is not None:
 			for frame_no in none_frame_list:
 				final_dict["class"].append("None")
-				update_dict(asana, subject_id, camera_mapping[asana])
+				x0, y0, w, h = data[frame_no]["box"][0], data[frame_no]["box"][1], data[frame_no]["box"][2], data[frame_no]["box"][3]
+				update_dict(asana, subject_id, camera_mapping[asana], x0, y0, w, h)
 				for j in range(136):
 					for k in range(3):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
@@ -131,7 +136,8 @@ def main():
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "left"))
-				update_dict(asana, subject_id, camera_mapping[asana])
+				x0, y0, w, h = data[frame_no]["box"][0], data[frame_no]["box"][1], data[frame_no]["box"][2], data[frame_no]["box"][3]
+				update_dict(asana, subject_id, camera_mapping[asana], x0, y0, w, h)
 				for j in range(136):
 					for k in range(3):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
@@ -140,7 +146,8 @@ def main():
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "right"))
-				update_dict(asana, subject_id, camera_mapping[asana])
+				x0, y0, w, h = data[frame_no]["box"][0], data[frame_no]["box"][1], data[frame_no]["box"][2], data[frame_no]["box"][3]
+				update_dict(asana, subject_id, camera_mapping[asana], x0, y0, w, h)
 				for j in range(136):
 					for k in range(3):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(data[frame_no]["keypoints"][j*3 + k])
@@ -148,7 +155,7 @@ def main():
 		
 
 	df = pd.DataFrame(final_dict)
-	df.to_csv("dataset.csv", index = False)
+	df.to_csv("dataset_alphapose.csv", index = False)
 
 
 main()

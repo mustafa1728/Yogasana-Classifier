@@ -7,11 +7,11 @@ original_videos_root = "/mnt/project2/home/rahul/Yoga-Kinect/VideosAll/"
 root = "/home1/ee318062/"
 time_stamps = pd.read_csv("timestamps.csv")
 
-combined_csv = pd.read_csv("/mnt/project/Yoga-Kinect/AllFiles-QC-Data.csv")
+meta_csv = pd.read_csv("Kinect_Metadata_Full.csv")
 
 # print(combined_csv.columns)
 
-no_frames_per_video = 200
+no_frames_per_video = 210
 padding = 1
 asana_id_mapping = {}
 
@@ -21,7 +21,7 @@ logging.basicConfig(filename="logs_kinect.txt",
 					format='%(levelname)-6s | %(message)s',
 					level=logging.INFO)
 
-final_dict = {"subject": [], "asana": [], "class": []}
+final_dict = {"subject": [], "camera": [], "asana": [], "class": []}
 for i in range(25):
 	for j in range(2):
 		final_dict["keypt" + "_" + str(i) + "_" + str(j)] = []
@@ -33,11 +33,12 @@ def get_timestamp_convention(subject_id, suffix):
         subject_number = int(subject_id[-3:])
         subject_number += 25
         return subject_id[:-3] + str(subject_number).zfill(3)
+	#return subject_id
 
 def get_fps(i):
 	# fps = combined_csv[(combined_csv["asana"] == asana) & (combined_csv["subject"] == subject_id)].iloc[0]["fps"]
-	no_frames = combined_csv.iloc[i][" number of frames in joints.csv"]
-	total_time = combined_csv.iloc[i][" total duration in seconds (joints.csv)"]
+	no_frames = meta_csv.iloc[i]["Num_Frames"]
+	total_time = meta_csv.iloc[i]["Duration"]
 	total_time = float(total_time)
 	return no_frames/total_time, no_frames
 
@@ -81,29 +82,37 @@ def get_asana_id(asana, direction):
 	'''
 	return asana + "_" + direction
 
-def update_dict(asana, subject):
+def update_dict(asana, subject, cam):
 	final_dict["asana"].append(asana)
 	final_dict["subject"].append(subject)
+	final_dict["camera"].append(cam)
 
 def main():
-	for i, (dir_path, subject_id, asana, suffix) in enumerate(zip(combined_csv[" directory pathname"], combined_csv["Subject"], combined_csv[" Asana"], combined_csv[" O/N"])):
-		if pd.isnull(dir_path) or pd.isnull(subject_id) or pd.isnull(asana) or pd.isnull(suffix):
-			logging.error("Missing data at index " + str(i) + "! Going to next video.")
-			continue
-		dir_path = dir_path[1:]
-		asana = asana[1:]
-		suffix = suffix[1:]
-		# print(os.readlink(dir_path), os.path.isfile(os.path.join(os.readlink(dir_path), "joints.csv")))
-		try:
-			joints = pd.read_csv(os.path.join(dir_path, "joints.csv"), header=None)
-		except FileNotFoundError:
-			logging.error("Joints data not found in " + dir_path + "! Going to next video.")
-			continue
+	#for i, (file_path, subject_id, asana, suffix) in enumerate(zip(meta_csv["Path"], meta_csv["Subject"], meta_csv["Asana"], meta_csv["O/N"])):
+	#	if pd.isnull(file_path) or pd.isnull(subject_id) or pd.isnull(asana) or pd.isnull(suffix):
+	#		logging.error("Missing data at index " + str(i) + "! Going to next video.")
+	#		continue
 		
+		# print(os.readlink(dir_path), os.path.isfile(os.path.join(os.readlink(dir_path), "joints.csv")))
+		#try:
+		#	joints = pd.read_csv(os.path.join(dir_path, "joints.csv"), header=None)
+		#except FileNotFoundError:
+		#	logging.error("Joints data not found in " + dir_path + "! Going to next video.")
+		#	continue
+	with open("index.txt", "r") as f:
+		i = int(f.read())
+	
+	for row in meta_csv.itertuples(name=None):
+		if(row[0] < i):
+			continue
+		subject_id = get_timestamp_convention(row[1], row[2])
+		asana = row[3]
+		cam = row[4]
+		joints = pd.read_csv(row[5], header=None)
 		try:
-			current_dict = time_stamps[(time_stamps["aasana"] == asana) & (time_stamps["subject"] == get_timestamp_convention(subject_id, suffix))].iloc[0]
+			current_dict = time_stamps[(time_stamps["aasana"] == asana) & (time_stamps["subject"] == subject_id)].iloc[0]
 		except IndexError:
-			logging.error("No timestamps found for "+asana+"-"+get_timestamp_convention(subject_id, suffix))
+			logging.error("No timestamps found for "+asana+"-"+subject_id)
 			continue
 		start_time = current_dict["position start (left)"]
 		end_time = current_dict["position end (left)"]
@@ -111,11 +120,11 @@ def main():
 		end_time_right = current_dict["position end (right)"]
 		
 		try:
-			fps, total_frames = get_fps(i)
+			fps, total_frames = get_fps(row[0])
 		except IndexError:
 			logging.error("FPS for " + asana + " - " + subject_id + " not found! Going to next video.")
 			continue
-		string_status = str(i) + "| fps: "+str(fps)+" asana: "+asana+" subject: "+subject_id+" suffix: "+suffix
+		string_status = str(row[0]) + "| fps: "+str(fps)+" asana: "+asana+" subject: "+subject_id+" suffix: "+row[2]
 		logging.info(string_status)
 		print(string_status)
 
@@ -123,7 +132,7 @@ def main():
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "left"))
-				update_dict(asana, subject_id)
+				update_dict(asana, subject_id, cam)
 				for j in range(25):
 					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
@@ -132,7 +141,7 @@ def main():
 		if frame_no_list is not None:
 			for frame_no in frame_no_list:
 				final_dict["class"].append(get_asana_id(asana, "right"))
-				update_dict(asana, subject_id)
+				update_dict(asana, subject_id, cam)
 				for j in range(25):
 					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
@@ -141,14 +150,19 @@ def main():
 		if none_frame_list is not None:
 			for frame_no in none_frame_list:
 				final_dict["class"].append("None")
-				update_dict(asana, subject_id)
+				update_dict(asana, subject_id, cam)
 				for j in range(25):
 					for k in range(2):
 						final_dict["keypt" + "_" + str(j) + "_" + str(k)].append(get_keypoint(joints, frame_no, j, k))
 
+		if (row[0]+1-i)%20 == 0:
+			df = pd.DataFrame(final_dict)
+			df.to_csv("dataset_kinect.csv", index = False)
+			with open("index.txt", "w+") as f:
+				f.write(str(row[0]))
+			print("Checkpoint saved. %d files processed"%(row[0]+1))
+		
 
-	df = pd.DataFrame(final_dict)
-	df.to_csv("dataset_kinect.csv", index = False)
 
 
 main()
