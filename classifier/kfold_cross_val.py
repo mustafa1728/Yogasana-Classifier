@@ -2,25 +2,26 @@ from sklearn.model_selection import StratifiedKFold
 from utils import merge_dicts
 import os
 import pandas as pd
-
-from model import Classifier
-from utils import get_dataset, AccuracyMeter
 import numpy as np
 
+from model import Classifier
+from utils import get_dataset #AccuracyMeter
+
 def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", method = "random_forest", lr = 5):
-    X, Y, _ = get_dataset(dataset_path)
+    X, Y = get_dataset(dataset_path)
     kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
 
     cfms_path = "{}-fold_cfms_subsampled_depth_{}".format(n_splits, max_depth)
     os.makedirs(cfms_path, exist_ok = True) 
-    accuracy_meter = AccuracyMeter()
+    #accuracy_meter = AccuracyMeter()
     fold_id = 0
     #k_fold_data = {"fold":[], "train_split_size": [], "test_split_size": [], "accuracy": [], "confusion_plot_path": []}
     md = {}
-    predictions = np.asarray([-1 for i in range(len(Y))])
+    predictions = []
+    labels = []
 
     for train_index, test_index in kf.split(X, Y):
-        print("done 1")
+        #print("done 1")
         fold_id += 1
         confusion_plot_path = os.path.join(cfms_path, "fold_"+str(fold_id))
 
@@ -31,11 +32,12 @@ def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path =
 
         X_train, X_test = classifier.scale_vectors(X_train, X_test, "scaler.pkl")
         classifier.train(X_train, Y_train)
-        # metric_dict = classifier.evaluate(X_test, Y_test, confusion_path = confusion_plot_path)
+        metric_dict = classifier.evaluate(X_test, Y_test, confusion_path = confusion_plot_path)
 
-        predictions[test_index] = classifier.model.predict(X_test)
+        predictions.append(classifier.model.predict(X_test))
+        labels.append(Y_test)
 
-        # md = merge_dicts(md, metric_dict)
+        md = merge_dicts(md, metric_dict)
         # print("The {} classifier with {} decision trees has an accuracy of {}%".format(method, no_trees, 100*accuracy))
 
         # is_best = accuracy_meter.update(accuracy)
@@ -50,14 +52,14 @@ def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path =
     
     #accuracy_meter.display()
 
-        df_predictions = pd.DataFrame({"labels": Y, "predictions": predictions})
-        df_predictions.to_csv("predictions_frame_wise.csv", index = False)
+    df_predictions = pd.DataFrame({"labels": np.concatenate(labels), "predictions": np.concatenate(predictions)})
+    df_predictions.to_csv("predictions_frame_wise.csv", index = False)
 
-    # save_results_path = "{}_{}-fold_cross-validation_results_max_depth_{}.csv".format(method, n_splits, max_depth)
-    # df = pd.DataFrame(md)
-    # df['Metrics'] = df.index
-    # df = df[[df.columns.tolist()[-1]] + df.columns.tolist()[:-1]]
-    # df.to_csv(save_results_path, index = False)
+    #save_results_path = "{}_{}-fold_cross-validation_results_max_depth_{}.csv".format(method, n_splits, max_depth)
+    #df = pd.DataFrame(md)
+    #df['Metrics'] = df.index
+    #df = df[[df.columns.tolist()[-1]] + df.columns.tolist()[:-1]]
+    #df.to_csv(save_results_path, index = False)
 
 if __name__ == '__main__':
     Kfold_cross_val(max_depth = 20, n_splits = 10, dataset_path = "/Users/mustafa/Desktop/IIT Delhi/Internship stuff/SURA/dataset.csv", save_model_path = "10-fold_best_model.z")
