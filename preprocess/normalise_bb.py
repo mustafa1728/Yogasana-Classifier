@@ -10,8 +10,8 @@ def normalise(dataset_path, save_path=None, w_map_path=None, h_map_path=None):
 
     dataset = pd.read_csv(dataset_path)
     X = dataset.iloc[:, 8:].values
-    corner_x = dataset.iloc[:, 5].values
-    corner_y = dataset.iloc[:, 6].values
+    corner_x = dataset.iloc[:, 4].values
+    corner_y = dataset.iloc[:, 5].values
     widths = dataset.iloc[:, 6].values
     heights = dataset.iloc[:, 7].values
     classes = dataset.iloc[:, 2].values
@@ -27,8 +27,8 @@ def normalise(dataset_path, save_path=None, w_map_path=None, h_map_path=None):
 
 
     for i in range(136):
-        X[:, i] = (X[:, i] - corner_x) / new_widths
-        X[:, i+1] = (X[:, i+1] - corner_y) / new_heights
+        X[:, i] = (X[:, i] - corner_x) * (new_widths / widths)
+        X[:, i+1] = (X[:, i+1] - corner_y) * (new_heights / heights)
 
     dataset.iloc[:, 8:] = X
     dataset.iloc[:, 6] = new_widths
