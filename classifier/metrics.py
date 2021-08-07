@@ -1,15 +1,14 @@
 from sklearn.metrics import classification_report
 import pandas as pd
 import json
-import joblib
-import numpy as np
+#import joblib
 
-def predictions_to_df(prediction_path):
-    predictions = pd.read_csv(prediction_path)
+for i in range(1, 4):
+    predictions = pd.read_csv("predictions_cam_wise_kinect_d8_%i.csv"%i)
     with open("ids_to_class.json") as f:
         id_to_class_mapping = json.load(f)
-    classifier = joblib.load("models/model_subsampled.z")
-    labels = [id_to_class_mapping[str(c)] for c in classifier.classes_]
+    #classifier = joblib.load("models/model_subsampled.z")
+    labels = [id_to_class_mapping[str(c)] for c in predictions['labels'].unique()]
 
     Y = predictions.iloc[:, 0].values
     Y_hat = predictions.iloc[:, 1].values
@@ -20,32 +19,9 @@ def predictions_to_df(prediction_path):
     print(labels)
 
     report = classification_report(Y, Y_hat, target_names=labels, output_dict = True)
+    # report = classification_report(Y, Y_hat)
+    # print(type(report))
+    # print(report)
     df = pd.DataFrame(report)
     df = df.transpose()
-    # df.to_csv("camera_wise_metric_2cam_1.csv")
-    return df
-
-# df0 = predictions_to_df("predictions_camera_wise_3cam3cam_0.csv")
-# df1 = predictions_to_df("predictions_camera_wise_3cam3cam_1.csv")
-# df2 = predictions_to_df("predictions_camera_wise_3cam3cam_2.csv")
-# df3 = predictions_to_df("predictions_camera_wise_3cam3cam_3.csv")
-
-df0 = predictions_to_df("predictions_camera_wise2cam_0.csv")
-df1 = predictions_to_df("predictions_camera_wise2cam_1.csv")
-df2 = predictions_to_df("predictions_camera_wise2cam_2.csv")
-df3 = predictions_to_df("predictions_camera_wise2cam_3.csv")
-
-
-new_df = pd.DataFrame(index = df0.index, columns = df0.columns)
-
-for col in new_df.columns:
-    stack = np.vstack([df0[col], df1[col], df2[col], df3[col]])
-    print(stack)
-    new_var = np.mean(stack, axis = 0)
-    new_df[col] = new_var
-
-new_df.to_csv("metrics_2cam.csv")
-
-    
-
-
+    df.to_csv("cam_wise_metric_kinect_d8_%d.csv"%i)

@@ -46,7 +46,7 @@ def pre_process_labels(dataset, save_mapping_path = None):
     if save_mapping_path is not None:
         with open(save_mapping_path, 'w') as f:
             json.dump(id_to_class_mapping, f)
-    return dataset
+    return dataset, class_to_id_mapping
 
 def still_left_to_still(x):
     if x == "Still_left": 
@@ -65,12 +65,15 @@ def get_dataset(dataset_path):
     dataset.dropna(inplace=True)
     indices_to_keep = ~dataset.isin([np.nan, np.inf, -np.inf]).any(1)
     dataset = dataset[indices_to_keep]
-    dataset = pre_process_labels(dataset)
+    dataset, mapping = pre_process_labels(dataset, 'ids_to_class.json')
     X = dataset.iloc[:, 4:].values
     Y = dataset.iloc[:, 3].values
-    sample_classes = [i for i in dataset['class'].value_counts().key()][:12]
-    X, Y, classes = sub_sample(X, Y, sample_classes)
-    return X, Y, classes
+    sample_classes = ['Garudasana_left', 'Garudasana_right', 'Gorakshasana_left', 'Katichakrasana_left', 'Natavarasana_left',
+                        'Natavarasana_right', 'Pranamasana_left', 'Pranamasana_right', 'Still', 'Tadasana_left', 'Vrikshasana_left',
+                        'Vrikshasana_right']
+    sample_class = [mapping[x] for x in sample_classes]
+    X, Y = sub_sample(X, Y, sample_class)
+    return X, Y
 
 def save_confusion(classifier, X_Test, Y_Test, display_labels=None, save_path = "confusion_matrix.png"):
     fig, ax = plt.subplots(figsize=(15, 12))
@@ -112,7 +115,7 @@ def predict_class(input_features, model_weights_path = "model.z", saved_mapping 
 
 def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
     
-    no__subjects = 51
+    no__subjects = 76
     subjects_per_fold = no__subjects//no_folds
     #fold_root_dir_path = "subject_wise_fold"
     #fold_dir_templ = "fold_subj_{}"
@@ -120,7 +123,7 @@ def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
     rng = np.random.default_rng(1)
 
     idx_list = rng.permutation(no__subjects) + 1
-    X_train_list, Y_train_list, X_test_list, Y_test_list = [], [], [], []
+    #X_train_list, Y_train_list, X_test_list, Y_test_list = [], [], [], []
 
     for i in range(no_folds):
         if i==no_folds-1:
@@ -130,12 +133,12 @@ def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
         #print(fold_subjs)
         mask = np.array([sub in fold_subjs for sub in subjects])
         
-        X_train_list.append(X[~mask])
-        Y_train_list.append(Y[~mask])
-        X_test_list.append(X[mask])
-        Y_test_list.append(Y[mask])
+        #X_train_list.append(X[~mask])
+        #Y_train_list.append(Y[~mask])
+        #X_test_list.append(X[mask])
+        #Y_test_list.append(Y[mask])
         
-
+        yield X[~mask], Y[~mask], X[mask], Y[mask]
 
         #subjs_string = "subjs"
         #for sub in fold_subjs:
@@ -148,7 +151,7 @@ def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
         #np.savetxt(os.path.join(fold_path, 'test_idx.txt'), np.arange(mask.shape[0])[mask], delimiter='\n')
         #np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
 
-    return (X_train_list, Y_train_list, X_test_list, Y_test_list)
+    #return (X_train_list, Y_train_list, X_test_list, Y_test_list)
 
 def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
     
@@ -167,16 +170,18 @@ def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
     #print("cam 3: ", len([0 for cam in cameras if cam == 3]))
     #print("cam 4: ", len([0 for cam in cameras if cam == 4]))
 
-    X_train_list, Y_train_list, X_test_list, Y_test_list = [], [], [], []
+    #X_train_list, Y_train_list, X_test_list, Y_test_list = [], [], [], []
 
     for cam in all_camera_folds:
         #print(cam)
         mask = np.array([c in cam for c in cameras])
 
-        X_train_list.append(X[~mask])
-        Y_train_list.append(Y[~mask])
-        X_test_list.append(X[mask])
-        Y_test_list.append(Y[mask])
+        #X_train_list.append(X[~mask])
+        #Y_train_list.append(Y[~mask])
+        #X_test_list.append(X[mask])
+        #Y_test_list.append(Y[mask])
+
+        yield X[~mask], Y[~mask], X[mask], Y[mask]
 
         #print(X.shape, X_train.shape)
         #print(Y.shape, Y_train.shape)
@@ -189,7 +194,7 @@ def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
         #np.savetxt(os.path.join(fold_path, 'test_idx.txt'), np.arange(mask.shape[0])[mask], delimiter='\m')
         #np.savetxt(os.path.join(fold_path, 'y_test.csv'), Y_test, delimiter=',')
     
-    return (X_train_list, Y_train_list, X_test_list, Y_test_list)
+    #return (X_train_list, Y_train_list, X_test_list, Y_test_list)
 
 def sub_sample_cam_sub(X, Y, classes_to_sample, cameras, subjects, no_samples_per_class = 6000):
 
@@ -222,13 +227,16 @@ def gen(dataset_path):
     dataset.dropna(inplace=True)
     indices_to_keep = ~dataset.isin([np.nan, np.inf, -np.inf]).any(1)
     dataset = dataset[indices_to_keep]
-    dataset = pre_process_labels(dataset)
+    dataset, mapping = pre_process_labels(dataset)
     X = dataset.iloc[:, 4:].values
     Y = dataset.iloc[:, 3].values
     cameras = dataset.iloc[:, 0].apply(lambda x: int(x)).values
     subjects = dataset.iloc[:, 1].apply(lambda x: int(x[-3:])).values
-    sampled_classes = [i for i in dataset["class"].value_counts().to_dict().keys()][:12]
-    X, Y, classes, cameras, subjects = sub_sample_cam_sub(X, Y, sampled_classes, cameras, subjects)
+    sampled_classes = ['Garudasana_left', 'Garudasana_right', 'Gorakshasana_left', 'Katichakrasana_left', 'Natavarasana_left',
+                        'Natavarasana_right', 'Pranamasana_left', 'Pranamasana_right', 'Still', 'Tadasana_left', 'Vrikshasana_left',
+                        'Vrikshasana_right']
+    sample_class = [mapping[x] for x in sampled_classes]
+    X, Y, _, cameras, subjects = sub_sample_cam_sub(X, Y, sample_class, cameras, subjects)
     
     #np.savetxt('X_sub_sampled.csv', X, delimiter=',')
     #np.savetxt('Y_sub_sampled.csv', Y, delimiter=',')
