@@ -1,7 +1,7 @@
 import pandas as pd
 from model import Classifier
 import numpy as np
-
+from sklearn.model_selection import StratifiedKFold
 
 class CascadingClassifier():
     def __init__(self, method, max_depth=None, no_estimators=500, lr=0.05, random_state=0):
@@ -34,22 +34,22 @@ class CascadingClassifier():
         self.train_level_2(kp_ar_feat, Y2, self.pred_1)
         self.train_level_3(kp_ar_feat, Y3, self.pred_1, self.pred_2)
 
-    def evaluate(self, kp_ar_feat, Y1, Y2, Y3, save_predictions_path = None):
+    def evaluate(self, kp_ar_feat, Y1, Y2, Y3, save_predictions = None):
         feat = kp_ar_feat
         self.accuracy1 = self.classifier1.evaluate(feat, Y1)
         print("Level 1 classification achieves {:.2f}% accuracy".format(self.accuracy1*100))
-        self.pred_1 = self.classifier2.model.predict(feat)
+        self.pred_1 = self.classifier1.model.predict(feat)
         feat = np.append(feat, self.pred_1.reshape(-1, 1), axis = 1)
         self.accuracy2 = self.classifier2.evaluate(feat, Y2)
         print("Level 2 classification achieves {:.2f}% accuracy".format(self.accuracy2*100))
-        self.pred_2 = self.classifier3.model.predict(feat)
+        self.pred_2 = self.classifier2.model.predict(feat)
         feat = np.append(feat, self.pred_2.reshape(-1, 1), axis = 1)
         self.accuracy3 = self.classifier3.evaluate(feat, Y3)
         print("Level 3 classification achieves {:.2f}% accuracy".format(self.accuracy3*100))
         self.pred_3 = self.classifier3.model.predict(feat)
-        if save_predictions_path is not None:
+        if save_predictions is not None:
             summary = {"labels1": Y1, "labels2": Y2, "labels3": Y3, "pred1": self.pred_1, "pred2": self.pred_2, "pred3": self.pred_3}
-            pd.DataFrame(summary).to_csv(save_predictions_path, index=False)
+            return pd.DataFrame(summary)
 
 def get_Y(data, train_df_path="/Users/mustafa/Desktop/yoga/Yoga-82/yoga_train.txt", test_df_path = "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_test.txt"):
     train_df = pd.read_csv(train_df_path, sep=',', lineterminator='\n', header = None)
@@ -101,6 +101,23 @@ def main():
     X = normalise(dataset, X)
     as_ratios = bbox[:, 1] / bbox[:, 0]
     kp_ar_feat = np.append(X, as_ratios.reshape(-1, 1), axis = 1)
-    classifier.train(kp_ar_feat, Y1, Y2, Y3)
+
+    kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=2)
+    predictions = pd.DataFrame
+    for train_index, test_index in kf.split(kp_ar_feat, Y1):
+        X_train, X_test = kp_ar_feat[train_index], kp_ar_feat[test_index]
+        Y1_train, Y1_test = Y1[train_index], Y1[test_index]
+        Y2_train, Y2_test = Y2[train_index], Y2[test_index]
+        Y3_train, Y3_test = Y3[train_index], Y3[test_index]
+
+        classifier = CascadingClassifier("random_forest", max_depth = None, no_estimators = 500)
+
+        classifier.train(X_train, Y1_train, Y2_train, Y3_train)
+        pred = classifier.evaluate(X_test, Y1_test, Y2_test, Y3_test, save_predictions=1)
+        try:
+            predictions = pd.concat([predictions, pred], ignore_index=True)
+        except:
+            print("saving prediction failed.")
+    predictions.to_csv("yoga_82_cascading_predictions.csv", index=False)
 
 main()
