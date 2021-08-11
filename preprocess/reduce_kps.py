@@ -8,19 +8,32 @@ def change_xy_format(x, y):
         answer.append(y[i])
     return answer
 
-def get_mean_min_max(x, y):
+def get_mean_min_max(x, y, mode=2):
     new_x = []
     new_y = []
     # mean
     new_x.append(sum(x)/len(x))
     new_y.append(sum(y)/len(y))
-    distances = [(x[i] - new_x[0]) + (y[i] - new_y[0]) for i in range(len(x))]
-    # min
-    new_x.append(x[distances.index(min(distances))])
-    new_y.append(y[distances.index(min(distances))])
-    # max
-    new_x.append(x[distances.index(max(distances))])
-    new_y.append(y[distances.index(max(distances))])
+    if mode == 1:
+        distances = [(x[i] - new_x[0]) + (y[i] - new_y[0]) for i in range(len(x))]
+        # min
+        new_x.append(x[distances.index(min(distances))])
+        new_y.append(y[distances.index(min(distances))])
+        # max
+        new_x.append(x[distances.index(max(distances))])
+        new_y.append(y[distances.index(max(distances))])
+    else:
+        new_x.append(max(x))
+        new_y.append(y[x.index(max(x))])
+
+        new_x.append(min(x))
+        new_y.append(y[x.index(min(x))])
+
+        new_x.append(x[y.index(max(y))])
+        new_y.append(max(y))
+
+        new_x.append(x[y.index(min(y))])
+        new_y.append(min(y))
 
     return change_xy_format(new_x, new_y)
 
@@ -39,8 +52,10 @@ def reduce(kps_human, score_threshold = None):
 
     def thres(x, indices, thres_val=score_threshold):
         if thres_val is None:
-            thres_val = max([kps_score[i] for i in indices])/10
-        return [x[i] for i in indices if kps_score[i] >= thres_val]
+            thres_val = [kps_score[i] for i in indices]
+            thres_val.sort()
+            thres_val = thres_val[10]
+        return [x[i] for i in indices if kps_score[i] > thres_val]
 
     # for face and both hands, get only the mean, min and max points
     reduced_kps += get_mean_min_max(thres(kps_x, face_kp_i), thres(kps_y, face_kp_i))
@@ -49,7 +64,7 @@ def reduce(kps_human, score_threshold = None):
 
     return reduced_kps
 
-def reduce_dataset(dataset_path, save_path, kps_start_id = 9):
+def reduce_dataset(dataset_path, save_path, kps_start_id = 6):
     dataset = pd.read_csv(dataset_path)
     kps = dataset.iloc[:, kps_start_id:].values
     reduced_kps = np.asarray([reduce(kps[i, :]) for i in range(kps.shape[0])])
@@ -61,4 +76,5 @@ def reduce_dataset(dataset_path, save_path, kps_start_id = 9):
     pd.DataFrame(reduced_dict).to_csv(save_path, index=False)
 
 if __name__ == "__main__":
-    reduce_dataset("../yadav_dataset.csv", "yadav_kp_reduced.csv")
+    reduce_dataset("../yoga_82_max_bbox.csv", "yoga_82_reduced_top10_each_xy.csv")
+    # reduce_dataset("../yadav_dataset.csv", "yadav_reduced_top10_each_xy.csv")
