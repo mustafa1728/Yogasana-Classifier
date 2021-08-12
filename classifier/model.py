@@ -1,7 +1,8 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, BaggingClassifier, GradientBoostingClassifier, HistGradientBoostingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
 # from lightgbm import LGBMClassifier
@@ -16,7 +17,10 @@ class Classifier():
         Currently supported methods:
             adaboost
             random_forest
-            LGBM
+            bagging
+            grad_boost
+            hist_grad_boost
+
         Parameters: 
             max_depth       : maximum depth of any tree
             no_estimators   : number of trees in the ensemble
@@ -37,6 +41,12 @@ class Classifier():
             self.model = AdaBoostClassifier(DecisionTreeClassifier(criterion='gini', max_depth=self.max_depth), n_estimators = self.no_estimators, random_state = self.random_state, learning_rate=self.lr)
         elif self.method == "random_forest":
             self.model = RandomForestClassifier(n_estimators = self.no_estimators, criterion = 'entropy', random_state = self.random_state, max_depth=self.max_depth)
+        elif self.method == "bagging":
+            self.model = BaggingClassifier(DecisionTreeClassifier(criterion='gini', max_depth=self.max_depth), n_estimators=self.no_estimators, random_state=self.random_state)
+        elif self.method == "grad_boost":
+            self.model = GradientBoostingClassifier(n_estimators = self.no_estimators, criterion = 'friedman_mse', random_state = self.random_state, max_depth=self.max_depth, learning_rate=self.lr)
+        elif self.method == "hist_grad_boost":
+            self.model = HistGradientBoostingClassifier(max_iter = self.no_estimators, random_state = self.random_state, max_depth=self.max_depth, learning_rate=self.lr)
         elif self.method == "LGBM":
             self.model = LGBMClassifier(boosting_type='goss', max_depth=self.max_depth, n_estimators = self.no_estimators, random_state = self.random_state, learning_rate=self.lr)
         self.model.fit(X_train,Y_train)
@@ -52,20 +62,9 @@ class Classifier():
     def evaluate(self, X_test, Y_test, model = None, confusion_path = None):
         if model is None:
             model = self.model
-        metric_dict = {i:{'acc': 0, 'prec': 0, 'rec': 0, 'f1': 0} for i in model.classes_}
-        Y_pred = model.predict(X_test)
-        for i in model.classes_:
-            mask = Y_test == i
-            temp_y_test = Y_test[mask]
-            temp_y_pred = Y_pred[mask]
-            metric_dict[i]['acc'] = accuracy_score(temp_y_test, temp_y_pred)
-            metric_dict[i]['prec'] = precision_score(temp_y_test, temp_y_pred)
-            metric_dict[i]['rec'] = recall_score(temp_y_test, temp_y_pred)
-            metric_dict[i]['f1'] = f1_score(temp_y_test, temp_y_pred)
-        
         if confusion_path is not None:
             save_confusion(model, X_test, Y_test, save_path = confusion_path)
-        return metric_dict
+        return model.score(X_test, Y_test)
     
     def test(self, X_test, Y_test, model_path, confusion_path = None):
         self.load(model_path)
