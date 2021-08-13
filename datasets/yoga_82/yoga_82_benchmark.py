@@ -6,7 +6,7 @@ import json
 from classifier.model import Classifier
 import numpy as np
 from sklearn.metrics import top_k_accuracy_score
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, KFold
 from classifier.utils import AccuracyMeter
 
 def generate_data(root_data_dir, save_path):
@@ -48,12 +48,10 @@ def generate_data(root_data_dir, save_path):
 
 def process_dataset_to_get_largest_bbox(dataset_path, save_path):
     dataset = pd.read_csv(dataset_path)
-    print(dataset.describe())
     dataset["size"] = dataset["width"].values * dataset["height"].values
     ids_max_bbox = dataset.groupby(['image_path'])["size"].idxmax()
     dataset = dataset.iloc[ids_max_bbox, :]
     dataset = dataset.drop(["size"], axis = 1)
-    print(dataset.describe())
     dataset.to_csv(save_path, index=False)
 
 def preprocess_labels(Y1, Y2):
@@ -64,7 +62,7 @@ def preprocess_labels(Y1, Y2):
     for i in range(len(classes)):
         id_to_class_mapping[str(i)] = classes[i]
         class_to_id_mapping[classes[i]] = i
-    print(id_to_class_mapping)
+    # print(id_to_class_mapping)
     Y1_processed = [class_to_id_mapping[i] for i in Y1]
     Y2_processed = [class_to_id_mapping[i] for i in Y2]
     with open("yoga_82_id_to_class.json", "w") as f:
@@ -73,7 +71,7 @@ def preprocess_labels(Y1, Y2):
 
 def check_curated(paths, curated_root_dir = "/Users/mustafa/Desktop/yoga/Yoga-82/curated_data"):
     curated_paths = [p for p in paths if os.path.isfile(os.path.join(curated_root_dir, p))]
-    print("curation: {} -> {}".format(len(paths), len(curated_paths)))
+    # print("curation: {} -> {}".format(len(paths), len(curated_paths)))
     return curated_paths
     
 
@@ -95,8 +93,8 @@ def get_Y(data, train_df, test_df):
                     found = True
     return np.asarray(Y)
 
-def experiment(data_path, train_idx_path, test_idx_path, level=3):
-    print("Experimenting for level {}".format(level))
+def experiment(data_path, train_idx_path, test_idx_path, level=3, method="random_forest", no_kps = 136):
+    print("Experimenting {} for level {}".format(method, level))
     data = pd.read_csv(data_path)
     train_df = pd.read_csv(train_idx_path, sep=',', lineterminator='\n', header = None)
     test_df = pd.read_csv(test_idx_path, sep=',', lineterminator='\n', header = None)
@@ -113,18 +111,8 @@ def experiment(data_path, train_idx_path, test_idx_path, level=3):
     corner_y = data.iloc[:, 3].values
     widths = data.iloc[:, 4].values
     heights = data.iloc[:, 5].values
-    classes = Y
-    average_widths = average_heights = {}
-    for cls in classes:
-        indices = [i for i in range(0, len(classes)) if classes[i] == cls]
 
-        average_widths[cls] = np.mean(widths[indices])
-        average_heights[cls] = np.mean(heights[indices])
-
-    new_widths = np.asarray([average_widths[c] for c in classes ])
-    new_heights = np.asarray([average_heights[c] for c in classes ])
-
-    for i in range(136):
+    for i in range(no_kps):
         X[:, 2*i] = (X[:, 2*i] - corner_x) * (1 / widths)
         X[:, 2*i+1] = (X[:, 2*i+1] - corner_y) * (1 / heights)
 
@@ -133,40 +121,13 @@ def experiment(data_path, train_idx_path, test_idx_path, level=3):
     # X = np.append(X, bbox, axis = 1)
     X = np.append(X, as_ratios, axis = 1)
 
-    print(paths[:5])
-    print(train_paths[:5])
-
-    train_paths = check_curated(train_paths)
-    test_paths = check_curated(test_paths)
-    mask_train = np.array([pth in train_paths for pth in paths])
-    mask_test = np.array([pth in test_paths for pth in paths])
-
     
-
-    X_train, Y_train = X[mask_train], Y[mask_train]
-    X_test, Y_test = X[mask_test], Y[mask_test]
-
-    print(X_train.shape, X_test.shape)
-
-    # Y_train, Y_test = preprocess_labels(Y_train, Y_test)
-
-    classifier = Classifier("random_forest", no_estimators = 500, max_depth = None)
-    # X_train, X_test = classifier.scale_vectors(X_train, X_test)
-    # classifier.train(X_train, Y_train)
-
-    # Y_pred = classifier.model.predict_proba(X_test)
-    # accuracy = classifier.model.score(X_test, Y_test)
-    # top1_accuracy = top_k_accuracy_score(Y_test, Y_pred, k=1)
-    # top5_accuracy = top_k_accuracy_score(Y_test, Y_pred, k=5)
-
-    # print("Normal Accuracy on Yoga-82: {:.2f}%".format(accuracy*100))
-    # print("Top 1 Accuracy on Yoga-82: {:.2f}%".format(top1_accuracy*100))
-    # print("Top 5 Accuracy on Yoga-82: {:.2f}%".format(top5_accuracy*100))
-
-    print("starting 10 fold cross val")
-    curated_paths = check_curated(paths)
+    # curated_paths = check_curated(paths)
+    with open("yoga_82_curated.json") as f:
+        curated_paths = json.load(f)
     curated_mask = [i for i in range(len(paths)) if paths[i] in curated_paths]
-    X_curated, Y_curated = X[curated_mask], Y[curated_mask]
+    # X_curated, Y_curated = X[curated_mask], Y[curated_mask]
+    X_curated, Y_curated = X, Y
     # Y_curated, _ = preprocess_labels(Y_curated, np.asarray([]))
     if level == 1:
         with open("/Users/mustafa/Desktop/yoga/Yoga-82/level_3_to_1.json") as f:
@@ -180,15 +141,28 @@ def experiment(data_path, train_idx_path, test_idx_path, level=3):
         if level > 3 or level < 1:
             raise ValueError("Level can be one of [1, 2, 3]. Received {}".format(level))
     Y_curated = np.asarray(Y_curated)
+
+    # mask_train = np.array([pth in train_paths for pth in curated_paths])
+    # mask_test = np.array([pth in test_paths for pth in curated_paths])
+    # X_train, Y_train = X_curated[mask_train], Y_curated[mask_train]
+    # X_test, Y_test = X_curated[mask_test], Y_curated[mask_test]
+
+    # classifier = Classifier(method, max_depth = None, no_estimators = 500, random_state=1, lr=0.1)
+    # X_train, X_test = classifier.scale_vectors(X_train, X_test, "scaler.pkl")
+    # classifier.train(X_train, Y_train)
+    # accuracy = classifier.evaluate(X_test, Y_test, confusion_path = "yoga_82_confusion.png")
+    # print("Accuracy with {} on their splits is {:.2f}%".format(method, accuracy*100))
+
+
     kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=2)
     predictions = np.asarray([-1 for i in range(len(Y_curated))])
     accuracy_meter = AccuracyMeter()
+    print("There are a total of {} samples in the dataset.".format(X_curated.shape[0]))
     for train_index, test_index in kf.split(X_curated, Y_curated):
         X_train, X_test = X_curated[train_index], X_curated[test_index]
         Y_train, Y_test = Y_curated[train_index], Y_curated[test_index]
-        print(X_train.shape, X_test.shape)
 
-        classifier = Classifier("random_forest", max_depth = None, no_estimators = 500)
+        classifier = Classifier(method, max_depth = None, no_estimators = 500, random_state=1, lr=0.1)
 
         X_train, X_test = classifier.scale_vectors(X_train, X_test, "scaler.pkl")
         classifier.train(X_train, Y_train)
@@ -197,20 +171,22 @@ def experiment(data_path, train_idx_path, test_idx_path, level=3):
         predictions[test_index] = classifier.model.predict(X_test)
 
         # md = merge_dicts(md, metric_dict)
-        print("Accuracy: {}%".format(100*accuracy))
+        print("Accuracy for method {} : {}%".format(method, 100*accuracy))
 
         is_best = accuracy_meter.update(accuracy)
         if is_best:
            classifier.save_model("yoga_82_model.z")
 
         df_predictions = pd.DataFrame({"labels": Y_curated, "predictions": predictions})
-        df_predictions.to_csv("yoga_82_asr_maxbbox_curated_predictions_level_{}.csv".format(level), index = False)
+        predictions_root_dir = "yoga_82_ensemble"
+        os.makedirs(predictions_root_dir, exist_ok=True)
+        df_predictions.to_csv(os.path.join("pred_{}_level_{}.csv".format(method, level)), index = False)
+        # df_predictions.to_csv(os.path.join("pred_reduced_top10_sum_xy_level_{}.csv".format(method, level)), index = False)
 
     accuracy_meter.display()
 
 
 if __name__ == "__main__":
     # generate_data(root_data_dir = "yoga_82_alphapose_kps", save_path = "yoga_82_complete.csv")
-    experiment("yoga_82_max_bbox_kponly.csv", "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_train.txt", "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_test.txt", level = 1)
+    experiment("preprocess/yoga_82_reduced_top10_sum_xy.csv", "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_train.txt", "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_test.txt", level = 1, method="ensemble", no_kps=35)
     # process_dataset_to_get_largest_bbox("yoga_82_complete.csv", "yoga_82_max_bbox.csv")
-    # print("this is with actual bbox!")
