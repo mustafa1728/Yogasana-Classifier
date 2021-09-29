@@ -3,7 +3,7 @@ from utils import merge_dicts
 import os
 import pandas as pd
 
-from model import Classifier
+from classifier.model import Classifier
 from utils import get_dataset, AccuracyMeter
 import numpy as np
 

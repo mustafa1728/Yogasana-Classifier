@@ -5,7 +5,7 @@ from sklearn.ensemble import VotingClassifier, RandomForestClassifier, HistGradi
 from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
-#from model import Classifier
+#from classifier.model import Classifier
 from lightgbm import LGBMClassifier
 
 df = pd.read_csv('../preprocess/Jain_Sampled_Dataset.csv')

@@ -1,5 +1,5 @@
 import pandas as pd
-from model import Classifier
+from classifier.model import Classifier
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
