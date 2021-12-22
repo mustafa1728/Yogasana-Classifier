@@ -10,11 +10,13 @@ Packages required are listed in [requirements](./requirements.txt). There is a d
 
 Preprocessing codes to generate key points dataset from raw video data and alhpapose key points can be found [here](./preprocess). It also includes code for bounding box normalisation, key point selection and fold generation. 
 
-The main classifier class can be found [here](./classifier/model.py). It contains a unified api for training and inferencing of different classification methods like Adaboost, Gradient Boost, LightGBM, Random forests, and Histogram gradient boosting. It also has an option to ensemble three of these methods. 
+The main classifier class can be found [here](./classifier/model.py). It contains a unified api for training and inferencing of different classification methods like Adaboost, Gradient Boost, LightGBM, Random forests, and Histogram gradient boosting. It also has an option to ensemble three of these methods. Along with this main class, there is also a cascading classifier [here](./classifier/cascading_classifier.py), that is relevant for heirarchial classification like in Yoga-82.
 
 The training and evaluation scripts can be found [here](./api). It has k fold cross validation, along with a visualisation script to visualise the inference on an entire video. 
 
 ### Instructions to run
+
+
 
 ---
 
