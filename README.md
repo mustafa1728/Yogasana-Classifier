@@ -1,6 +1,6 @@
 # Yogasana-Classifier
 
-Official codebase for the paper "A View Independent Classification Framework for Yoga Postures", under review at [ICVGIP 2021](https://iitj.ac.in/icvgip2021/).
+Official codebase for the paper "A View Independent Classification Framework for Yoga Postures".
 
 ### Installation
 
