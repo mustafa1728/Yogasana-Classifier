@@ -16,8 +16,16 @@ The training and evaluation scripts can be found [here](./api). It has k fold cr
 
 ### Instructions to run
 
+To run frame wise evaluation, run the following command,
 
-
+~~~
+python3 api/kfold_cross_val.py \
+    --max_depth 20 \
+    --n_splits 10 \
+    --dataset_path <path to keypoints dataset> \
+    --save_model_path <path to save model weights> \
+    --method <classification method to use> \
+~~~
 ---
 
 

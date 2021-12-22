@@ -6,6 +6,7 @@ import numpy as np
 
 from classifier.model import Classifier
 from utils import get_dataset #AccuracyMeter
+import argparse
 
 def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path = "dataset.csv", save_model_path = "model.z", method = "random_forest", lr = 5):
     X, Y = get_dataset(dataset_path)
@@ -61,5 +62,22 @@ def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path =
     #df = df[[df.columns.tolist()[-1]] + df.columns.tolist()[:-1]]
     #df.to_csv(save_results_path, index = False)
 
+def get_args():
+    parser = argparse.ArgumentParser(description='Yogasana Classification')
+    parser.add_argument('--max_depth', type=int, default=20, help='the maximum depth of deicsion trees')
+    parser.add_argument('--n_splits', type=int, default=10, help='the number of folds in k-fold cross val')
+    parser.add_argument('--dataset_path', type=str, default="./dataset.csv", help='path of key points dataset')
+    parser.add_argument('--save_model_path', type=str, default="10-fold_best_model.z", help='path to save model')
+    parser.add_argument('--method', type=str, default="random_forest", help='classification method to use')
+    args = parser.parse_args()
+    return args
+
 if __name__ == '__main__':
-    Kfold_cross_val(max_depth = 20, n_splits = 10, dataset_path = "./dataset.csv", save_model_path = "10-fold_best_model.z", method="random_forest")
+    args = get_args()
+    Kfold_cross_val(
+        max_depth = args.max_depth, 
+        n_splits = args.max_depth, 
+        dataset_path = args.max_depth, 
+        save_model_path = args.max_depth, 
+        method = args.max_depth,
+    )
