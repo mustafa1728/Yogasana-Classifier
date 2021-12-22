@@ -62,4 +62,4 @@ def Kfold_cross_val(n_splits = 10, no_trees = 500, max_depth = 8, dataset_path =
     #df.to_csv(save_results_path, index = False)
 
 if __name__ == '__main__':
-    Kfold_cross_val(max_depth = 20, n_splits = 10, dataset_path = "/Users/mustafa/Desktop/IIT Delhi/Internship stuff/SURA/dataset.csv", save_model_path = "10-fold_best_model.z")
+    Kfold_cross_val(max_depth = 20, n_splits = 10, dataset_path = "./dataset.csv", save_model_path = "10-fold_best_model.z", method="random_forest")

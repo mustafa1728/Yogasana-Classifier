@@ -10,8 +10,8 @@ import joblib
 
 model_path='model_subsampled.z'
 scaler_path='scalar.pkl'
-key_pt_path='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj003_Gorakshasana/alphapose-results.json'
-frames_folder='/home1/ee318062/Yoga_Camera1_AlphaPose/Subj003_Gorakshasana/vis'
+key_pt_path='Subj003_Gorakshasana/alphapose-results.json'
+frames_folder='Subj003_Gorakshasana/vis'
 
 id_to_class_map = None
 with open('ids_to_class.json', 'r') as f:

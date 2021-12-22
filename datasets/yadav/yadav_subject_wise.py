@@ -59,6 +59,6 @@ def subject_wise(no_trees = 500, max_depth = 8, dataset_path = "dataset.csv", sa
    
 
 if __name__ == '__main__':
-    subject_wise(max_depth = None, dataset_path = "/Users/mustafa/Desktop/yoga/Yogasana-Classifier/preprocess/yadav_normalised_no_curation_dataset.csv", save_model_path = "yadav_best_model.z", cfms_path = "yadav_subject_wise")
+    subject_wise(max_depth = None, dataset_path = "../../preprocess/yadav_normalised_no_curation_dataset.csv", save_model_path = "yadav_best_model.z", cfms_path = "yadav_subject_wise")
 
     

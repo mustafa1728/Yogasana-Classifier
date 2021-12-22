@@ -4,8 +4,8 @@ import os
 
 
 
-main_csv_path = "/Users/mustafa/Desktop/yoga/datasets/yadav et al/yadav_dataset/extracted.csv"
-json_root_path = "/Users/mustafa/Desktop/yoga/datasets/yadav et al/yadav_dataset_kps/"
+main_csv_path = "../../yadav_dataset/extracted.csv"
+json_root_path = "../../yadav_dataset_kps/"
 
 main_df = pd.read_csv(main_csv_path)
 print(main_df.head())
@@ -70,7 +70,7 @@ for i, (asana, subject, frame_no, path) in enumerate(zip(main_df["asana"], main_
     folder_name = path.split('/')[-2]
     img_name = path.split('/')[-1]
 
-    curated_root_dir = "/Users/mustafa/Desktop/yoga/datasets/yadav et al/curation/yadav_dataset"
+    curated_root_dir = "../../yadav_dataset"
     # if not os.path.isfile(os.path.join(curated_root_dir, folder_name, img_name)):
     #     print("removed in curation")
     #     curated_removed+=1

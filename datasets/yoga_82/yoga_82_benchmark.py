@@ -188,5 +188,5 @@ def experiment(data_path, train_idx_path, test_idx_path, level=3, method="random
 
 if __name__ == "__main__":
     # generate_data(root_data_dir = "yoga_82_alphapose_kps", save_path = "yoga_82_complete.csv")
-    experiment("preprocess/yoga_82_reduced_top10_sum_xy.csv", "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_train.txt", "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_test.txt", level = 1, method="ensemble", no_kps=35)
+    experiment("preprocess/yoga_82_reduced_top10_sum_xy.csv", "yoga_train.txt", "yoga_test.txt", level = 1, method="ensemble", no_kps=35)
     # process_dataset_to_get_largest_bbox("yoga_82_complete.csv", "yoga_82_max_bbox.csv")

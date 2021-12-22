@@ -51,7 +51,7 @@ class CascadingClassifier():
             summary = {"labels1": Y1, "labels2": Y2, "labels3": Y3, "pred1": self.pred_1, "pred2": self.pred_2, "pred3": self.pred_3}
             return pd.DataFrame(summary)
 
-def get_Y(data, train_df_path="/Users/mustafa/Desktop/yoga/Yoga-82/yoga_train.txt", test_df_path = "/Users/mustafa/Desktop/yoga/Yoga-82/yoga_test.txt"):
+def get_Y(data, train_df_path="./datasets/yoga_82/yoga_train.txt", test_df_path = "./datasets/yoga_82/yoga_test.txt"):
     train_df = pd.read_csv(train_df_path, sep=',', lineterminator='\n', header = None)
     test_df = pd.read_csv(test_df_path, sep=',', lineterminator='\n', header = None)
     paths = data.iloc[:, 0].values
