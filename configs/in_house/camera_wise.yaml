@@ -1,0 +1,9 @@
+DATASET:
+  NAME: 'in_house'
+  PATH: '../dataset.csv'
+SOLVER:
+  METHOD: 'random_forest'
+OUTPUT:
+  OUTPUT_DIR: 'output/camera_wise'
+EVALUATION:
+  METHOD: "camera"
