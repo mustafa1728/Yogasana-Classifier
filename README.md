@@ -16,16 +16,20 @@ The training and evaluation scripts can be found [here](./api). It has k fold cr
 
 ### Instructions to run
 
-To run frame wise evaluation, run the following command,
+To reproduce the results, make necessary modifications (dataset paths, method etc) in the corresponding config files, and run `main.py`, with the path to the config as an argument. An example command to run frame wise evaluation on the in house dataset is shown below.
 
 ~~~
-python3 api/kfold_cross_val.py \
-    --max_depth 20 \
-    --n_splits 10 \
-    --dataset_path <path to keypoints dataset> \
-    --save_model_path <path to save model weights> \
-    --method <classification method to use> \
+python3 main.py --cfg configs/in_house/frame_wise.yaml
 ~~~
+
+Some relevant config files are:
+
+- Frame wise Evaluation on in house dataset [(yaml)](./configs/in_house/frame_wise.yaml)
+- Subject wise Evaluation on in house dataset [(yaml)](./configs/in_house/subject_wise.yaml)
+- Camera wise Evaluation, training on 3 camera angles of in house dataset [(yaml)](./configs/in_house/camera_wise_3cam.yaml)
+
+
+
 ---
 
 
