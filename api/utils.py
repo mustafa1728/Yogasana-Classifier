@@ -187,19 +187,28 @@ def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
             fold_subjs = idx_list[i*subjects_per_fold : (i+1)*subjects_per_fold]
         mask = np.array([sub in fold_subjs for sub in subjects])
     
-        yield X[~mask], Y[~mask], X[mask], Y[mask]
+        yield ~mask, mask
 
 
-def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
+def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None, n_cams=3):
     
     if all_camera_folds is None:
-        all_camera_folds = [
-            [1], [2], [3], [4], 
-            [1, 3], [1, 4], [2, 3], [2, 4], 
-            [2, 3, 4], [1, 3, 4], [1, 2, 4], [1, 2, 3]
-        ]
+        if n_cams == 1:
+            all_camera_folds = [
+                [2, 3, 4], [1, 3, 4], [1, 2, 4], [1, 2, 3]
+            ]
+        elif n_cams == 2:
+            all_camera_folds = [
+                [1, 3], [1, 4], [2, 3], [2, 4]
+            ]
+        elif n_cams == 3:
+            all_camera_folds = [
+                [1], [2], [3], [4]
+            ]
+        else:
+            raise ValueError("n_cams should be one of [1, 2, 3]. Received {}".format(n_cams))
     
     for cam in all_camera_folds:
         mask = np.array([c in cam for c in cameras])
 
-        yield X[~mask], Y[~mask], X[mask], Y[mask]
+        yield ~mask, mask

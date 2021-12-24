@@ -7,3 +7,4 @@ OUTPUT:
   OUTPUT_DIR: 'output/camera_wise'
 EVALUATION:
   METHOD: "camera"
+  N_CAMS: 3

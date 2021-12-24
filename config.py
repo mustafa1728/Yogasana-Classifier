@@ -42,7 +42,7 @@ _C.OUTPUT.CONFUSION_ROOT = "confusion"
 _C.EVALUATION = CN()
 _C.EVALUATION.METHOD = "frame" # options: ["frame", "subject", "camera"]
 _C.EVALUATION.N_SPLITS = 10 
-
+_C.EVALUATION.N_CAMS = 3
 
 
 def get_cfg_defaults():

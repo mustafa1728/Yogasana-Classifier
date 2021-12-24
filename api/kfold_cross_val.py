@@ -19,7 +19,8 @@ def Kfold_cross_val(
     method = "random_forest", 
     lr = 5, 
     split_type="frame",
-    log_path="eval.log"
+    log_path="eval.log",
+    n_cams=3,
 ):
 
     logging.basicConfig(filename=log_path, filemode='a', format='%(levelname)s | %(message)s', level=logging.INFO)
@@ -39,7 +40,7 @@ def Kfold_cross_val(
     elif split_type == "subject":
         generator = gen_subj_wise_folds(X, Y, subjects, n_splits)
     elif split_type == "camera":
-        generator = gen_camera_wise_folds(X, Y, cams)
+        generator = gen_camera_wise_folds(X, Y, cams, n_cams)
     else:
         raise ValueError("split_type should be one of [frame, subject, camera]. Received {}".format(split_type))
 

@@ -40,6 +40,7 @@ def main():
         lr = cfg.SOLVER.LR,
         split_type = cfg.EVALUATION.METHOD,
         log_path = log_path,
+        n_cams = cfg.EVALUATION.N_CAMS,
     )
 
 
