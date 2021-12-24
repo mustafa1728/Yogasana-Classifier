@@ -22,6 +22,7 @@ _C.DATASET.PATH = "dataset.csv"
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
 _C.SOLVER.METHOD = "random_forest" # options: ["adaboost", "random_forest", "bagging", "grad_boost", "hist_grad_boost", "lgbm", "ensemble"]
+_C.SOLVER.LR = 5
 _C.SOLVER.MAX_DEPTH = 20
 _C.SOLVER.NO_TREES = 500
 

@@ -73,12 +73,12 @@ def condition(x):
     else:  
         return x
 
-def get_dataset(dataset_path, include_as_ratio = False, return_subj = False):
+def get_dataset(dataset_path, include_as_ratio = False, return_subj = False, return_cams = False):
     dataset = pd.read_csv(dataset_path)
     dataset.dropna(inplace=True)
     indices_to_keep = ~dataset.isin([np.nan, np.inf, -np.inf]).any(1)
     dataset = dataset[indices_to_keep]
-    dataset = pre_process_labels(dataset, "yadav_mapping.json")
+    dataset = pre_process_labels(dataset)
     X = dataset.iloc[:, 8:].values
     Y = dataset.iloc[:, 3].values
     if include_as_ratio:
@@ -88,7 +88,12 @@ def get_dataset(dataset_path, include_as_ratio = False, return_subj = False):
         X = np.append(X, as_ratios, axis = 1)
     X, Y, classes, subj_subset, cam_subset = sub_sample(X, Y, dataset["class"].value_counts().to_dict(), dataset["subject"].values, dataset["camera"].values)
     if return_subj:
-        return X, Y, subj_subset
+        if return_cams:
+            return X, Y, subj_subset, cam_subset
+        else:
+            return X, Y, subj_subset
+    elif return_cams:
+        return X, Y, cam_subset
     else:
         return X, Y
 
@@ -152,6 +157,7 @@ class AccuracyMeter():
         print("The best accuracy is: {:.2f}%".format(self.best_accuracy*100))
         print("The worst accuracy is: {:.2f}%".format(self.worst_accuracy*100))
         print("The average accuracy is: {:.2f}%".format(self.average_accuracy*100))
+        return "The average accuracy is: {:.2f}%".format(self.average_accuracy*100)
 
 def merge_dicts(d1, d2, i):
     for k in d2.keys():
@@ -163,3 +169,37 @@ def merge_dicts(d1, d2, i):
             else:
                 d1[k][p] = (d1[k][p]*i + d2[k][p])/(i+1)
     return d1
+
+
+
+def gen_subj_wise_folds(X, Y, subjects, no_folds = 10):
+    
+    no_subjects = 51
+    subjects_per_fold = no_subjects//no_folds
+    rng = np.random.default_rng(1)
+
+    idx_list = rng.permutation(no_subjects) + 1
+    
+    for i in range(no_folds):
+        if i==no_folds-1:
+            fold_subjs = idx_list[i*subjects_per_fold : ]
+        else:
+            fold_subjs = idx_list[i*subjects_per_fold : (i+1)*subjects_per_fold]
+        mask = np.array([sub in fold_subjs for sub in subjects])
+    
+        yield X[~mask], Y[~mask], X[mask], Y[mask]
+
+
+def gen_camera_wise_folds(X, Y, cameras, all_camera_folds = None):
+    
+    if all_camera_folds is None:
+        all_camera_folds = [
+            [1], [2], [3], [4], 
+            [1, 3], [1, 4], [2, 3], [2, 4], 
+            [2, 3, 4], [1, 3, 4], [1, 2, 4], [1, 2, 3]
+        ]
+    
+    for cam in all_camera_folds:
+        mask = np.array([c in cam for c in cameras])
+
+        yield X[~mask], Y[~mask], X[mask], Y[mask]
