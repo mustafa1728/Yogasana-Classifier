@@ -4,13 +4,13 @@ import cv2
 import pandas as pd
 import logging
 
-original_videos_root = "/mnt/project2/home/rahul/Yoga-Kinect/VideosAll/"
-root = "/home1/ee318062/"
+original_videos_root = "/mnt/project/Yoga-Kinect/"
+%root = "/home1/ee318062/"
 time_stamps = pd.read_csv("timestamps.csv")
 fps_df = pd.read_csv("fps.csv")
 camera_data = pd.read_csv("camera.csv")
-vid_fname = ""
-save_dir = ""
+vid_fname = "color.avi"
+save_dir = "/mnt/local/YogaPoseEstimation/all_videos_extracted_frames/"
 
 camera_mapping = {"Still": 1}
 for index, row in camera_data.iterrows():
