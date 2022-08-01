@@ -6,6 +6,10 @@ Official codebase for the paper "A View Independent Classification Framework for
 
 Packages required are listed in [requirements](./requirements.txt). There is a dependency on LighGBM ([paper](https://ui.adsabs.harvard.edu/abs/2021arXiv210900724Y/abstract)) ([docs](https://lightgbm.readthedocs.io/en/latest/)), and rest of the packages are standard libraries.
 
+### Datasets
+
+The processed key point inferred datasets can be found [here](https://drive.google.com/drive/folders/13xcSisb_UNwVRhV_joR0rXG3kmK_DDVi?usp=sharing).
+
 ### Code Overview
 
 Preprocessing codes to generate key points dataset from raw video data and alhpapose key points can be found [here](./preprocess). It also includes code for bounding box normalisation, key point selection and fold generation. 
