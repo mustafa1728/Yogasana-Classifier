@@ -1,6 +1,10 @@
 # Yogasana-Classifier
 
-Official codebase for the paper "A View Independent Classification Framework for Yoga Postures".
+Official codebase for the paper "A View Independent Classification Framework for Yoga Postures" [[`arxiv`](https://arxiv.org/abs/2206.13577)]. 
+
+<p align="center">
+    <img src="./assets/Yogasana_Classification.png" width=80%/> 
+</p>
 
 ### Installation
 
@@ -38,3 +42,17 @@ Some relevant config files are:
 
 
 This is being developed as part of the Yogasana classification project under Prof. Rahul Garg, CSE, IITD.
+
+
+### Reference
+
+If you find this work useful in your research, please consider citing it.
+
+~~~bibtex
+@article{chasmai2022view,
+  title={A View Independent Classification Framework for Yoga Postures},
+  author={Chasmai, Mustafa and Das, Nirjhar and Bhardwaj, Aman and Garg, Rahul},
+  journal={arXiv preprint arXiv:2206.13577},
+  year={2022}
+}
+~~~
