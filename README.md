@@ -1,6 +1,6 @@
 # Yogasana-Classifier
 
-Official codebase for the paper "A View Independent Classification Framework for Yoga Postures" [[`arxiv`](https://arxiv.org/abs/2206.13577)]. 
+Official codebase for the paper "A View Independent Classification Framework for Yoga Postures" [[`SNCS`](https://doi.org/10.1007/s42979-022-01376-7)][[`arxiv`](https://arxiv.org/abs/2206.13577)]. 
 
 <p align="center">
     <img src="./assets/Yogasana_Classification.png" width=80%/> 
@@ -52,7 +52,8 @@ If you find this work useful in your research, please consider citing it.
 @article{chasmai2022view,
   title={A View Independent Classification Framework for Yoga Postures},
   author={Chasmai, Mustafa and Das, Nirjhar and Bhardwaj, Aman and Garg, Rahul},
-  journal={arXiv preprint arXiv:2206.13577},
+  journal={Springer Nature Computer Science},
+  url = {https://doi.org/10.1007/s42979-022-01376-7},
   year={2022}
 }
 ~~~
